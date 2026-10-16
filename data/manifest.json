@@ -2,8 +2,8 @@
   "metadata": {
     "committee_id": 451,
     "name": "South Australia Public Works Committee",
-    "last_run": "2026-10-15T23:49:40.916367+00:00",
-    "total_documents": 3
+    "last_run": "2026-10-16T00:21:41.112899+00:00",
+    "total_documents": 5
   },
   "documents": {
     "a5e12b98-ae50-4f0b-9c3e-4b63b87ca9b1": {
@@ -38,6 +38,28 @@
       "ia_url": "https://archive.org/details/sa-parliament-pwc-5e98be62-Appearing_at_a_Public_Hearing_-_general",
       "status": "archived",
       "archived_at": "2026-10-15T23:49:02.476098+00:00"
+    },
+    "ae11d0fb-80fb-4f54-b5eb-ac8c051037b4": {
+      "id": "ae11d0fb-80fb-4f54-b5eb-ac8c051037b4",
+      "name": "PC-015-Public-Works-Committee.pdf",
+      "size_bytes": 403249,
+      "folder_path": "",
+      "discovered_at": "2026-10-16T00:21:36.299837+00:00",
+      "download_url": "https://prodinterappst.blob.core.windows.net/committees-doc-cache/ae11d0fb-80fb-4f54-b5eb-ac8c051037b4?sv=2019-02-02&sr=b&sig=VS9sfe6D%2BPmNXrKItVoNPTbTSR%2B3T70DdoSrKy4j9Bw%3D&se=2026-10-17T00%3A21%3A36Z&sp=r",
+      "ia_url": "https://archive.org/details/sa-parliament-pwc-ae11d0fb-PC-015-Public-Works-Committee",
+      "status": "archived",
+      "archived_at": "2026-10-16T00:21:38.263378+00:00"
+    },
+    "ab27a7d7-456f-4dd9-9f8d-8c5787d488d6": {
+      "id": "ab27a7d7-456f-4dd9-9f8d-8c5787d488d6",
+      "name": "PWC meeting schedule for 2026.pdf",
+      "size_bytes": 147655,
+      "folder_path": "",
+      "discovered_at": "2026-10-16T00:21:39.550009+00:00",
+      "download_url": "https://prodinterappst.blob.core.windows.net/committees-doc-cache/ab27a7d7-456f-4dd9-9f8d-8c5787d488d6?sv=2019-02-02&sr=b&sig=oyboJPd09kq0takFazjibmJgZqHQ9%2F85IH8znae4ZKg%3D&se=2026-10-17T00%3A21%3A39Z&sp=r",
+      "ia_url": "https://archive.org/details/sa-parliament-pwc-ab27a7d7-PWC_meeting_schedule_for_2026",
+      "status": "archived",
+      "archived_at": "2026-10-16T00:21:41.112344+00:00"
     }
   }
 }
