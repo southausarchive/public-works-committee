@@ -1,0 +1,81 @@
+{
+  "generated_at": "2026-10-15T23:49:40.916955+00:00",
+  "committee": "South Australia Public Works Committee (56th Parliament)",
+  "committee_id": 451,
+  "total_documents": 3,
+  "tree": {
+    "name": "Public",
+    "path": "",
+    "folders": [],
+    "files": [
+      {
+        "id": "a5e12b98-ae50-4f0b-9c3e-4b63b87ca9b1",
+        "name": "2026_Sitting_Schedule.pdf",
+        "size_bytes": 276744,
+        "folder_path": "",
+        "discovered_at": "2026-10-15T23:48:59.956230+00:00",
+        "download_url": "https://prodinterappst.blob.core.windows.net/committees-doc-cache/a5e12b98-ae50-4f0b-9c3e-4b63b87ca9b1?sv=2019-02-02&sr=b&sig=k4w8zDxeJR4wKlTYqJ70sI4s3N7XKSH7c4KwrWcikqg%3D&se=2026-10-16T23%3A48%3A59Z&sp=r",
+        "ia_url": "https://archive.org/details/sa-parliament-pwc-a5e12b98-2026_Sitting_Schedule",
+        "status": "archived",
+        "archived_at": "2026-10-15T23:49:00.356143+00:00"
+      },
+      {
+        "id": "13b223e1-f448-4727-ac3d-c338095666b8",
+        "name": "Agreed PWC Meeting Deadlines 2026.pdf",
+        "size_bytes": 108330,
+        "folder_path": "",
+        "discovered_at": "2026-10-15T23:49:01.184592+00:00",
+        "download_url": "https://prodinterappst.blob.core.windows.net/committees-doc-cache/13b223e1-f448-4727-ac3d-c338095666b8?sv=2019-02-02&sr=b&sig=JxwVfGFG2p6JCTJ6jryjR2pzR%2FTXDaI2CW8p6Cze02w%3D&se=2026-10-16T23%3A49%3A01Z&sp=r",
+        "ia_url": "https://archive.org/details/sa-parliament-pwc-13b223e1-Agreed_PWC_Meeting_Deadlines_2026",
+        "status": "archived",
+        "archived_at": "2026-10-15T23:49:01.488648+00:00"
+      },
+      {
+        "id": "5e98be62-19a6-4f5d-8105-73865aaad425",
+        "name": "Appearing at a Public Hearing - general.pdf",
+        "size_bytes": 122752,
+        "folder_path": "",
+        "discovered_at": "2026-10-15T23:49:02.208488+00:00",
+        "download_url": "https://prodinterappst.blob.core.windows.net/committees-doc-cache/5e98be62-19a6-4f5d-8105-73865aaad425?sv=2019-02-02&sr=b&sig=ERd5tUh%2BWJo2ANjhnyd6KrIXZetKd0QYqK4GCiovzhM%3D&se=2026-10-16T23%3A49%3A02Z&sp=r",
+        "ia_url": "https://archive.org/details/sa-parliament-pwc-5e98be62-Appearing_at_a_Public_Hearing_-_general",
+        "status": "archived",
+        "archived_at": "2026-10-15T23:49:02.476098+00:00"
+      }
+    ]
+  },
+  "documents": [
+    {
+      "id": "a5e12b98-ae50-4f0b-9c3e-4b63b87ca9b1",
+      "name": "2026_Sitting_Schedule.pdf",
+      "size_bytes": 276744,
+      "folder_path": "",
+      "discovered_at": "2026-10-15T23:48:59.956230+00:00",
+      "download_url": "https://prodinterappst.blob.core.windows.net/committees-doc-cache/a5e12b98-ae50-4f0b-9c3e-4b63b87ca9b1?sv=2019-02-02&sr=b&sig=k4w8zDxeJR4wKlTYqJ70sI4s3N7XKSH7c4KwrWcikqg%3D&se=2026-10-16T23%3A48%3A59Z&sp=r",
+      "ia_url": "https://archive.org/details/sa-parliament-pwc-a5e12b98-2026_Sitting_Schedule",
+      "status": "archived",
+      "archived_at": "2026-10-15T23:49:00.356143+00:00"
+    },
+    {
+      "id": "13b223e1-f448-4727-ac3d-c338095666b8",
+      "name": "Agreed PWC Meeting Deadlines 2026.pdf",
+      "size_bytes": 108330,
+      "folder_path": "",
+      "discovered_at": "2026-10-15T23:49:01.184592+00:00",
+      "download_url": "https://prodinterappst.blob.core.windows.net/committees-doc-cache/13b223e1-f448-4727-ac3d-c338095666b8?sv=2019-02-02&sr=b&sig=JxwVfGFG2p6JCTJ6jryjR2pzR%2FTXDaI2CW8p6Cze02w%3D&se=2026-10-16T23%3A49%3A01Z&sp=r",
+      "ia_url": "https://archive.org/details/sa-parliament-pwc-13b223e1-Agreed_PWC_Meeting_Deadlines_2026",
+      "status": "archived",
+      "archived_at": "2026-10-15T23:49:01.488648+00:00"
+    },
+    {
+      "id": "5e98be62-19a6-4f5d-8105-73865aaad425",
+      "name": "Appearing at a Public Hearing - general.pdf",
+      "size_bytes": 122752,
+      "folder_path": "",
+      "discovered_at": "2026-10-15T23:49:02.208488+00:00",
+      "download_url": "https://prodinterappst.blob.core.windows.net/committees-doc-cache/5e98be62-19a6-4f5d-8105-73865aaad425?sv=2019-02-02&sr=b&sig=ERd5tUh%2BWJo2ANjhnyd6KrIXZetKd0QYqK4GCiovzhM%3D&se=2026-10-16T23%3A49%3A02Z&sp=r",
+      "ia_url": "https://archive.org/details/sa-parliament-pwc-5e98be62-Appearing_at_a_Public_Hearing_-_general",
+      "status": "archived",
+      "archived_at": "2026-10-15T23:49:02.476098+00:00"
+    }
+  ]
+}
