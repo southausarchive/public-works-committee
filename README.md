@@ -1,59 +1,33 @@
-# South Australia Parliament - Public Works Committee Document Archive & Catalog
+# South Australia Parliament - Public Works Committee Document Catalog
 
-An automated, serverless pipeline designed to run on **GitHub Actions**. It scrapes and synchronizes documents from the [South Australia Parliament Public Works Committee document repository](https://committees.parliament.sa.gov.au/committee/451/Public%20Works%20Committee/56/56th%20Parliament%2005%2F05%2F2026%20-%20Current/56), preserves them indefinitely on the **[Internet Archive (Archive.org)](https://archive.org)** with rich metadata, and publishes a public, searchable catalog on **GitHub Pages**.
+An automated, serverless scraper and interactive catalog running entirely for free on **GitHub Actions** and hosted on **GitHub Pages**.
+
+It crawls and indexes all documents from the [South Australia Parliament Public Works Committee Portal](https://committees.parliament.sa.gov.au/committee/451/Public%20Works%20Committee/56/56th%20Parliament%2005%2F05%2F2026%20-%20Current/56), provides direct document access, and presents a responsive search engine with both Table View and interactive Tree View.
 
 ---
 
 ## Features
 
-- **Runs 100% Free on GitHub Actions**: Automatically executed on a weekly schedule (`cron`) or manually via the "Run workflow" button.
-- **Permanent Archival on Archive.org**: Uploads documents via the official `internetarchive` tool with structured metadata (creator, titles, subjects, parliamentary tags).
-- **Incremental & State-Preserving**: Keeps track of already-archived files in `data/manifest.json`. Future runs only inspect and upload new or modified files without re-scraping existing documents.
-- **Polite Rate Limiting & Execution Bounds**: Incorporates exponential backoff retries, request pacing, and safety runtime guards (stops cleanly well within GitHub's 6-hour job ceiling).
-- **Lightweight GitHub Pages Searchable Catalog**: A zero-dependency, dark-mode web application in `public/index.html` offering instant search, filtering, table view, and tree view.
-- **Git-Native Open Catalog**: Generates a human-readable [`CATALOG.md`](CATALOG.md) and machine-readable `public/data/catalog.json`.
+- **Automated Cloud Scraping**: Runs via GitHub Actions weekly (`cron`) or on-demand (`workflow_dispatch`).
+- **Interactive Directory Hierarchy**: Full collapsible tree view organizing files into categories, inquiries, submissions, and reports.
+- **Fast Client-Side Search**: Filter documents instantaneously by name, topic, or subfolder.
+- **Always-Accessible Document Links**: Downloads dynamically generate fresh, unexpired access tokens on click with automatic fallback.
+- **Open Data & Markdown Catalog**: Maintains a complete document list in [`CATALOG.md`](CATALOG.md) and machine-readable JSON in `public/data/catalog.json`.
 
 ---
 
-## Setup Instructions
+## Local Development & Testing
 
-### 1. Configure Internet Archive Secrets in GitHub
-
-To enable automatic uploads to Archive.org, generate S3 credentials for your Internet Archive account:
-1. Log into [Archive.org](https://archive.org) and visit [archive.org/account/s3.php](https://archive.org/account/s3.php).
-2. Generate your **Access Key** and **Secret Key**.
-3. In your GitHub repository, navigate to:
-   **Settings > Secrets and variables > Actions > New repository secret**
-4. Add:
-   - `IA_ACCESS_KEY`: *Your Internet Archive S3 Access Key*
-   - `IA_SECRET_KEY`: *Your Internet Archive S3 Secret Key*
-
-> **Note:** If these secrets are not configured, the workflow automatically runs in **dry-run mode**, updating the catalog and simulating uploads without failing.
-
-### 2. Enable GitHub Pages
-
-1. In your GitHub repository, go to **Settings > Pages**.
-2. Under **Build and deployment > Source**, select **GitHub Actions**.
-3. Once the workflow completes, your catalog will be publicly accessible at `https://<username>.github.io/<repo-name>/`.
-
----
-
-## Manual Execution & Local Testing
-
-### Run locally (Dry Run)
+### Scrape Catalog Locally
 ```bash
-# Test with a limit of 5 documents without uploading to Archive.org
-python3 archive_sync.py --limit 5 --dry-run
+# Scrape the first 20 files
+python3 scrape_catalog.py --limit 20
+
+# Scrape all committee files
+python3 scrape_catalog.py --limit 0
 ```
 
-### Full Local Sync (With Archive.org credentials)
-```bash
-export IA_ACCESS_KEY="your_access_key"
-export IA_SECRET_KEY="your_secret_key"
-python3 archive_sync.py --limit 0
-```
-
-### Preview the Static Catalog Locally
+### Preview Static Site Locally
 ```bash
 cd public
 python3 -m http.server 8000
@@ -67,14 +41,14 @@ python3 -m http.server 8000
 ```
 ├── .github/
 │   └── workflows/
-│       └── scrape-and-archive.yml   # Scheduled & manual GitHub Actions pipeline
+│       └── scrape-and-archive.yml   # Scheduled & manual GitHub Actions workflow
 ├── data/
-│   └── manifest.json                # State file tracking all archived documents & IDs
+│   └── manifest.json                # Persistent index of all discovered documents
 ├── public/
-│   ├── index.html                   # Searchable frontend for GitHub Pages
+│   ├── index.html                   # Searchable catalog application (GitHub Pages)
 │   └── data/
-│       └── catalog.json             # Flat & tree JSON catalog consumed by frontend
-├── archive_sync.py                  # Core scraping, retry, and Archive.org sync engine
-├── CATALOG.md                       # Auto-generated Markdown catalog
-└── README.md                        # Documentation and setup instructions
+│       └── catalog.json             # Structured document index and folder tree
+├── scrape_catalog.py                # Core scraping engine
+├── CATALOG.md                       # Auto-generated Markdown catalog table
+└── README.md                        # Documentation
 ```
