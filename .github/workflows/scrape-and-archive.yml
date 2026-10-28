@@ -1,33 +1,27 @@
-name: Scrape, Archive & Deploy Catalog
+name: Scrape Committee & Deploy Catalog
 
 on:
-  #schedule:
+  schedule:
     # Run every Monday at 03:00 UTC
-  #  - cron: '0 3 * * 1'
+    - cron: '0 3 * * 1'
   workflow_dispatch:
     inputs:
       limit:
-        description: 'Limit files to process (0 for unlimited)'
+        description: 'Limit files to scrape (0 for unlimited)'
         required: false
         default: '0'
-      dry_run:
-        description: 'Dry run (simulate without uploading to Archive.org)'
-        type: boolean
-        required: false
-        default: false
 
-# Permissions needed for GHA to commit back state and publish GitHub Pages
 permissions:
   contents: write
   pages: write
   id-token: write
 
 concurrency:
-  group: 'archive-sync'
+  group: 'catalog-sync'
   cancel-in-progress: false
 
 jobs:
-  sync-and-archive:
+  scrape-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -39,46 +33,27 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Run Scraper & Archive Sync
-        env:
-          IA_ACCESS_KEY: ${{ secrets.IA_ACCESS_KEY }}
-          IA_SECRET_KEY: ${{ secrets.IA_SECRET_KEY }}
+      - name: Scrape Committee Documents
         run: |
           LIMIT_ARG="${{ github.event.inputs.limit || '0' }}"
-          DRY_RUN_ARG="${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}"
-
-          # If IA keys are not provided, automatically fallback to dry-run
-          if [ -z "$IA_ACCESS_KEY" ] || [ -z "$IA_SECRET_KEY" ]; then
-            echo "::warning::IA_ACCESS_KEY or IA_SECRET_KEY not set. Running in dry-run mode."
-            DRY_RUN_ARG="--dry-run"
-          fi
-
-          python archive_sync.py \
+          python scrape_catalog.py \
             --committee-id 451 \
             --limit "$LIMIT_ARG" \
-            --max-runtime 330 \
-            --delay 0.5 \
-            $DRY_RUN_ARG \
+            --delay 0.3 \
             --manifest data/manifest.json \
             --catalog-json public/data/catalog.json \
             --catalog-md CATALOG.md
 
-      - name: Commit & Push updated catalog and manifest
+      - name: Commit & Push updated catalog
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/manifest.json CATALOG.md public/data/catalog.json
           if git diff --staged --quiet; then
-            echo "No changes in catalog or manifest to commit."
+            echo "No changes in catalog to commit."
           else
-            git commit -m "chore(archive): sync documents and update catalog [skip ci]"
+            git commit -m "chore: update committee catalog and index [skip ci]"
             git push
           fi
 
