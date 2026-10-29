@@ -1,6 +1,6 @@
 # SA Parliament Public Works Committee Document Catalog
 
-**Last Indexed:** 2026-10-29 21:42 UTC  
+**Last Indexed:** 2026-10-29 21:53 UTC  
 **Total Indexed Documents:** 16  
 **Official Repository:** [SA Parliament Committees Portal](https://committees.parliament.sa.gov.au/committee/451/Public%20Works%20Committee/56/56th%20Parliament%2005%2F05%2F2026%20-%20Current/56)  
 **Web Search Interface:** [Browse Index on GitHub Pages](https://southausarchive.github.io/public-works-committee/)  
