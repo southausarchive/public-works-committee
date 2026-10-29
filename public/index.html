@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Public Works Committee Document Index - SA Parliament</title>
+  <meta name="description" content="Public catalog and search index for documents, submissions, and reports from the Parliament of South Australia Public Works Committee.">
+  <link rel="canonical" href="https://southausarchive.github.io/public-works-committee/">
+  <link rel="sitemap" type="application/xml" title="Sitemap" href="sitemap.xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -1104,7 +1107,7 @@
               rowHtml += `<td><span class="folder-tag" onclick="filterFolder('${escapeQuotes(folder)}')">📁 ${escapeHtml(folder)}</span></td>`;
               break;
             case 'name':
-              rowHtml += `<td><div class="doc-name">${escapeHtml(doc.name)}</div></td>`;
+              rowHtml += `<td><div class="doc-name"><a href="documents/${doc.id}.html" style="color:var(--heading);text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${escapeHtml(doc.name)}</a></div></td>`;
               break;
             case 'ext':
               const ext = doc.extension || (doc.name ? doc.name.substring(doc.name.lastIndexOf('.')) : '-');
@@ -1301,7 +1304,7 @@
                 <div class="tree-node">
                   <div class="tree-node-content">
                     <span class="tree-expander"></span>
-                    <span class="tree-file-title">📄 ${escapeHtml(file.name)}</span>
+                    <span class="tree-file-title">📄 <a href="documents/${file.id}.html" style="color:var(--text-main);text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${escapeHtml(file.name)}</a></span>
                     <span class="size-col">(${formatBytes(file.size_bytes)})</span>
                     <div style="margin-left:auto;">
                       <button class="btn-download" style="padding:0.2rem 0.5rem;font-size:0.75rem;" onclick="triggerDownload('${file.id}', '${escapeQuotes(file.download_url || "")}', this)">⬇ Download</button>

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://southausarchive.github.io/public-works-committee/sitemap.xml
