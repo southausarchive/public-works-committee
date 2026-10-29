@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
 Scraper and Static Catalog Generator for SA Parliament Public Works Committee.
-- Scrapes folder hierarchy and file metadata via backend API.
+- Scrapes folder hierarchy and rich file metadata via backend API.
+- Captures FileName, Extension, Size, TimeLastModified, Title, and API IDs.
 - Stores persistent document records in data/manifest.json.
 - Generates:
     - public/data/catalog.json (flat document list + full recursive tree)
     - CATALOG.md (formatted Markdown table index)
-- Refreshes dynamic download links and provides fallback direct committee links.
 """
 
 import os
@@ -31,7 +31,7 @@ DEFAULT_HEADERS = {
 
 class CommitteeScraper:
     def __init__(self, committee_id: int = 451, manifest_path: str = "data/manifest.json",
-                 delay: float = 0.3, max_runtime_minutes: int = 330):
+                 delay: float = 0.25, max_runtime_minutes: int = 330):
         self.committee_id = committee_id
         self.manifest_path = manifest_path
         self.delay = delay
@@ -43,9 +43,7 @@ class CommitteeScraper:
         if os.path.exists(self.manifest_path):
             try:
                 with open(self.manifest_path, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    # Clean up old IA fields if present
-                    return data
+                    return json.load(f)
             except Exception as e:
                 sys.stderr.write(f"Warning: could not load manifest: {e}. Starting fresh.\n")
         return {
@@ -99,15 +97,14 @@ class CommitteeScraper:
             params["folderURL"] = folder_url
         return self._api_get("CommitteePublicFolder", params)
 
-    def get_download_link(self, file_id: str) -> Optional[str]:
+    def get_file_metadata(self, file_id: str) -> Dict[str, Any]:
         time.sleep(self.delay)
         params = {"committeeId": self.committee_id, "fileId": file_id}
         try:
-            data = self._api_get("CommitteeFileDownloadLink", params)
-            return data.get("DownloadLink")
+            return self._api_get("CommitteeFileDownloadLink", params)
         except Exception as e:
-            sys.stderr.write(f"Warning: Failed to fetch download link for {file_id}: {e}\n")
-            return None
+            sys.stderr.write(f"Warning: Failed to fetch metadata for {file_id}: {e}\n")
+            return {}
 
     def crawl_folder(self, folder_url: Optional[str] = None, folder_path: str = "",
                      max_files: int = sys.maxsize, stats: Optional[Dict[str, int]] = None) -> Dict[str, Any]:
@@ -131,7 +128,6 @@ class CommitteeScraper:
             sys.stderr.write(f"Error reading folder '{folder_path}': {e}\n")
             return node
 
-        # Process files in current folder
         raw_files = data.get("Files") or []
         for f in raw_files:
             if stats["count"] >= max_files:
@@ -141,33 +137,41 @@ class CommitteeScraper:
             file_id = f.get("Id")
             file_name = f.get("FileName")
             file_size = f.get("FileSize")
+            file_ext = f.get("FileExtension") or os.path.splitext(file_name)[1]
+            title = f.get("Title")
 
-            existing = self.manifest["documents"].get(file_id)
-            # If new or previous link missing, fetch signed download link
-            if not existing or not existing.get("download_url"):
-                download_url = self.get_download_link(file_id)
-                record = {
-                    "id": file_id,
-                    "name": file_name,
-                    "size_bytes": file_size,
-                    "folder_path": folder_path,
-                    "discovered_at": datetime.now(timezone.utc).isoformat(),
-                    "download_url": download_url,
-                    "direct_api_url": f"{API_BASE}/CommitteeFileDownloadLink?committeeId={self.committee_id}&fileId={file_id}",
-                    "committee_url": COMMITTEE_PAGE_URL
-                }
-            else:
-                record = existing
-                record["name"] = file_name
-                record["size_bytes"] = file_size
-                record["folder_path"] = folder_path
-                record["direct_api_url"] = f"{API_BASE}/CommitteeFileDownloadLink?committeeId={self.committee_id}&fileId={file_id}"
-                record["committee_url"] = COMMITTEE_PAGE_URL
+            existing = self.manifest["documents"].get(file_id, {})
+            last_modified = existing.get("last_modified")
+            download_url = existing.get("download_url")
+
+            # Fetch detailed metadata if missing
+            if not last_modified or not download_url:
+                meta = self.get_file_metadata(file_id)
+                download_url = meta.get("DownloadLink") or download_url
+                last_modified = meta.get("TimeLastModified") or existing.get("last_modified")
+                title = meta.get("Title") or title
+                if meta.get("FileSize"):
+                    file_size = meta.get("FileSize")
+                if meta.get("FileExtension"):
+                    file_ext = meta.get("FileExtension")
+
+            record = {
+                "id": file_id,
+                "name": file_name,
+                "title": title or "",
+                "extension": file_ext,
+                "size_bytes": file_size,
+                "folder_path": folder_path,
+                "discovered_at": existing.get("discovered_at") or datetime.now(timezone.utc).isoformat(),
+                "last_modified": last_modified or "",
+                "download_url": download_url,
+                "direct_api_url": f"{API_BASE}/CommitteeFileDownloadLink?committeeId={self.committee_id}&fileId={file_id}",
+                "committee_url": COMMITTEE_PAGE_URL
+            }
 
             self.manifest["documents"][file_id] = record
             node["files"].append(record)
 
-        # Recursively crawl subfolders
         raw_folders = data.get("Folders") or []
         for sf in raw_folders:
             if stats["count"] >= max_files:
@@ -206,24 +210,24 @@ class CommitteeScraper:
             f"**Last Indexed:** {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}  ",
             f"**Total Indexed Documents:** {len(all_docs)}  ",
             f"**Official Repository:** [SA Parliament Committees Portal]({COMMITTEE_PAGE_URL})  ",
-            f"**Web Search Interface:** [Browse Index on GitHub Pages](https://southausarchive.github.io/southausarchive/)  ",
+            f"**Web Search Interface:** [Browse Index on GitHub Pages](https://southausarchive.github.io/public-works-committee/)  ",
             "",
             "## Document Index",
             "",
-            "| Folder | Document Name | Size | Download / Access |",
-            "| :--- | :--- | :--- | :--- |"
+            "| Folder | Document Name | Ext | Size | Modified Date | Download |",
+            "| :--- | :--- | :--- | :--- | :--- | :--- |"
         ]
 
         sorted_docs = sorted(all_docs, key=lambda d: (d.get("folder_path", ""), d.get("name", "")))
         for doc in sorted_docs:
             folder = doc.get("folder_path") or "Root"
             name = doc.get("name", "Unnamed")
+            ext = doc.get("extension", "")
             size_kb = f"{(doc.get('size_bytes', 0) / 1024):.1f} KB" if doc.get('size_bytes') else "-"
-            file_id = doc.get("id")
-            api_link = f"https://committees-api.parliament.sa.gov.au/api/CommitteeFileDownloadLink?committeeId=451&fileId={file_id}"
+            mod_date = doc.get("last_modified", "")[:10] if doc.get("last_modified") else "-"
             direct_link = doc.get("download_url")
-            link_str = f"[Download]({direct_link})" if direct_link else f"[Fetch Link]({api_link})"
-            md_lines.append(f"| `{folder}` | **{name}** | {size_kb} | {link_str} |")
+            link_str = f"[Download]({direct_link})" if direct_link else "Download via Portal"
+            md_lines.append(f"| `{folder}` | **{name}** | `{ext}` | {size_kb} | {mod_date} | {link_str} |")
 
         os.makedirs(os.path.dirname(os.path.abspath(catalog_md_path)), exist_ok=True)
         with open(catalog_md_path, "w", encoding="utf-8") as f:
