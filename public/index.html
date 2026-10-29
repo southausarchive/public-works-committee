@@ -424,6 +424,34 @@
       background: #22272e;
     }
 
+    .th-action-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .btn-header-gear {
+      background: var(--badge-bg);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      border-radius: 5px;
+      padding: 0.2rem 0.45rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      line-height: 1;
+    }
+
+    .btn-header-gear:hover {
+      background: #30363d;
+      color: var(--heading);
+      border-color: var(--primary);
+    }
+
     th.sort-active {
       color: var(--primary);
     }
@@ -681,8 +709,7 @@
       </div>
       
       <div class="action-group">
-        <button id="btnToggleAdvSearch" class="btn btn-secondary">🔍 Advanced Search</button>
-        <button id="btnColumnOptions" class="btn btn-secondary">⚙️ Columns</button>
+        <button id="btnToggleAdvSearch" class="btn btn-secondary">🔍 Advanced</button>
         <button id="btnTable" class="btn active">📋 Table View</button>
         <button id="btnTree" class="btn">🌳 Tree View</button>
       </div>
@@ -937,21 +964,38 @@
       const activeCols = userColumns.filter(c => c.visible);
       let html = '<tr>';
 
-      activeCols.forEach(col => {
+      activeCols.forEach((col, index) => {
         const def = ALL_COLUMNS.find(c => c.id === col.id) || { name: col.id, sortKey: null };
         const isSorted = sortState.columnId === col.id;
         const sortIcon = isSorted ? (sortState.direction === 'asc' ? '▲' : '▼') : '↕';
         const sortClass = isSorted ? 'sort-active' : '';
+        const isLastCol = (index === activeCols.length - 1);
+
+        const gearButtonHtml = isLastCol
+          ? `<button id="btnColumnOptions" class="btn-header-gear" onclick="event.stopPropagation(); openColumnModal();" title="Customize Columns">⚙️</button>`
+          : '';
 
         if (def.sortKey) {
           html += `
             <th class="${sortClass}" onclick="handleSortClick('${col.id}')">
-              ${escapeHtml(def.name)}
-              <span class="sort-indicator">${sortIcon}</span>
+              <div class="${isLastCol ? 'th-action-header' : ''}">
+                <div>
+                  ${escapeHtml(def.name)}
+                  <span class="sort-indicator">${sortIcon}</span>
+                </div>
+                ${gearButtonHtml}
+              </div>
             </th>
           `;
         } else {
-          html += `<th>${escapeHtml(def.name)}</th>`;
+          html += `
+            <th>
+              <div class="${isLastCol ? 'th-action-header' : ''}">
+                <span>${escapeHtml(def.name)}</span>
+                ${gearButtonHtml}
+              </div>
+            </th>
+          `;
         }
       });
 
@@ -1385,10 +1429,10 @@
 
     // Column modal events
     const columnModal = document.getElementById('columnModal');
-    document.getElementById('btnColumnOptions').addEventListener('click', () => {
+    window.openColumnModal = function() {
       renderColumnCustomizer();
       columnModal.classList.add('open');
-    });
+    };
 
     document.getElementById('modalCloseBtn').addEventListener('click', () => {
       columnModal.classList.remove('open');
