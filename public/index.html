@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>South Australia Parliament - Public Works Committee Document Catalog</title>
+  <title>Public Works Committee Document Index - SA Parliament</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -11,7 +11,9 @@
     :root {
       --bg: #0d1117;
       --card-bg: #161b22;
+      --card-subtle: #1c2128;
       --border: #30363d;
+      --border-focus: #58a6ff;
       --text-main: #c9d1d9;
       --text-muted: #8b949e;
       --heading: #f0f6fc;
@@ -22,6 +24,7 @@
       --badge-bg: #21262d;
       --folder-color: #f1e05a;
       --hover-bg: #1f242c;
+      --danger: #f85149;
       --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
     }
@@ -41,14 +44,14 @@
     }
 
     .container {
-      max-width: 1250px;
+      max-width: 1350px;
       margin: 0 auto;
     }
 
     header {
-      margin-bottom: 2rem;
+      margin-bottom: 1.75rem;
       border-bottom: 1px solid var(--border);
-      padding-bottom: 1.5rem;
+      padding-bottom: 1.25rem;
     }
 
     .header-top {
@@ -60,7 +63,7 @@
     }
 
     h1 {
-      font-size: 1.85rem;
+      font-size: 1.75rem;
       font-weight: 700;
       color: var(--heading);
       letter-spacing: -0.02em;
@@ -75,12 +78,13 @@
     .header-actions {
       display: flex;
       gap: 0.75rem;
+      flex-wrap: wrap;
     }
 
     .stats-row {
       display: flex;
       gap: 1.25rem;
-      margin-top: 1.25rem;
+      margin-top: 1rem;
       flex-wrap: wrap;
     }
 
@@ -88,7 +92,7 @@
       background-color: var(--badge-bg);
       border: 1px solid var(--border);
       border-radius: 6px;
-      padding: 0.4rem 0.8rem;
+      padding: 0.35rem 0.75rem;
       font-size: 0.85rem;
       display: inline-flex;
       align-items: center;
@@ -99,12 +103,13 @@
       color: var(--heading);
     }
 
+    /* Controls & Search */
     .controls-panel {
       background-color: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 1rem 1.25rem;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1rem;
       display: flex;
       flex-wrap: wrap;
       gap: 1rem;
@@ -114,8 +119,10 @@
 
     .search-box {
       flex: 1;
-      min-width: 300px;
+      min-width: 280px;
       position: relative;
+      display: flex;
+      align-items: center;
     }
 
     .search-input {
@@ -123,7 +130,7 @@
       background: var(--bg);
       border: 1px solid var(--border);
       color: var(--heading);
-      padding: 0.65rem 1rem;
+      padding: 0.65rem 2.5rem 0.65rem 1rem;
       border-radius: 6px;
       font-size: 0.95rem;
       font-family: inherit;
@@ -136,9 +143,34 @@
       box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.2);
     }
 
-    .view-toggles {
+    .search-clear-btn {
+      position: absolute;
+      right: 0.75rem;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1.1rem;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 0.2rem;
+      border-radius: 50%;
+    }
+
+    .search-clear-btn:hover {
+      color: var(--heading);
+      background-color: var(--border);
+    }
+
+    .search-clear-btn.visible {
+      display: inline-flex;
+    }
+
+    .action-group {
       display: flex;
       gap: 0.5rem;
+      flex-wrap: wrap;
     }
 
     .btn {
@@ -155,6 +187,7 @@
       align-items: center;
       gap: 0.4rem;
       transition: all 0.2s;
+      user-select: none;
     }
 
     .btn:hover {
@@ -168,6 +201,199 @@
       color: #fff;
     }
 
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-main);
+    }
+
+    /* Advanced Search Drawer */
+    .advanced-search-panel {
+      background-color: var(--card-subtle);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+      display: none;
+    }
+
+    .advanced-search-panel.open {
+      display: block;
+    }
+
+    .adv-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .adv-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .adv-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--heading);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .adv-input, .adv-select {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--heading);
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .adv-input:focus, .adv-select:focus {
+      border-color: var(--primary);
+    }
+
+    .adv-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 0.75rem;
+    }
+
+    /* Active Filter Badges */
+    .filter-tags-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+      align-items: center;
+    }
+
+    .filter-tag-pill {
+      background: rgba(88, 166, 255, 0.15);
+      border: 1px solid rgba(88, 166, 255, 0.3);
+      color: var(--primary);
+      padding: 0.25rem 0.65rem;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .filter-tag-pill .remove-pill {
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .filter-tag-pill .remove-pill:hover {
+      color: #fff;
+    }
+
+    /* Column Customizer Modal */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(2px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      width: 90%;
+      max-width: 480px;
+      padding: 1.5rem;
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.75rem;
+    }
+
+    .modal-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--heading);
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1.3rem;
+    }
+
+    .column-list {
+      list-style: none;
+      margin-bottom: 1.25rem;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .column-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.55rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
+      background: var(--bg);
+    }
+
+    .column-item-left {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      font-size: 0.9rem;
+      color: var(--heading);
+    }
+
+    .column-item-actions {
+      display: flex;
+      gap: 0.35rem;
+    }
+
+    .btn-icon {
+      background: var(--badge-bg);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 0.2rem 0.45rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+
+    .btn-icon:hover {
+      color: var(--heading);
+      background: #30363d;
+    }
+
+    /* Table Component */
     .table-container {
       background-color: var(--card-bg);
       border: 1px solid var(--border);
@@ -188,6 +414,29 @@
       padding: 0.75rem 1rem;
       font-weight: 600;
       border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+
+    th:hover {
+      background: #22272e;
+    }
+
+    th.sort-active {
+      color: var(--primary);
+    }
+
+    .sort-indicator {
+      display: inline-block;
+      margin-left: 0.4rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    th.sort-active .sort-indicator {
+      color: var(--primary);
     }
 
     td {
@@ -225,17 +474,11 @@
       word-break: break-word;
     }
 
-    .size-col {
+    .size-col, .date-col, .ext-col {
       color: var(--text-muted);
       font-family: var(--font-mono);
       font-size: 0.85rem;
       white-space: nowrap;
-    }
-
-    .action-links {
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
     }
 
     .btn-download {
@@ -264,25 +507,7 @@
       cursor: wait;
     }
 
-    .link-portal {
-      color: var(--text-muted);
-      border: 1px solid var(--border);
-      text-decoration: none;
-      padding: 0.35rem 0.65rem;
-      border-radius: 5px;
-      font-size: 0.8rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-      transition: all 0.2s;
-    }
-
-    .link-portal:hover {
-      background: rgba(255, 255, 255, 0.05);
-      color: var(--heading);
-    }
-
-    /* Interactive Tree View */
+    /* Tree View */
     .tree-card {
       background-color: var(--card-bg);
       border: 1px solid var(--border);
@@ -433,12 +658,12 @@
     <header>
       <div class="header-top">
         <div>
-          <h1>SA Parliament Public Works Committee Document Catalog</h1>
-          <p class="subtitle">Searchable index & document browser (56th Parliament of South Australia)</p>
+          <h1>Public Works Committee Document Index - SA Parliament</h1>
+          <p class="subtitle">Searchable index & document browser</p>
         </div>
         <div class="header-actions">
           <a href="https://committees.parliament.sa.gov.au/committee/451/Public%20Works%20Committee/56/56th%20Parliament%2005%2F05%2F2026%20-%20Current/56" target="_blank" rel="noopener" class="btn">🏛️ Official Portal ↗</a>
-          <a href="https://github.com/southausarchive/southausarchive" target="_blank" rel="noopener" class="btn">GitHub Repository ↗</a>
+          <a href="https://github.com/southausarchive/public-works-committee" target="_blank" rel="noopener" class="btn">GitHub Repository ↗</a>
         </div>
       </div>
       <div class="stats-row">
@@ -448,29 +673,70 @@
       </div>
     </header>
 
+    <!-- Main Controls Panel -->
     <div class="controls-panel">
       <div class="search-box">
-        <input type="text" id="searchInput" class="search-input" placeholder="Search documents, inquiries, or folders (e.g., 'Darlington', 'Witness', 'Hansard', 'Report')...">
+        <input type="text" id="searchInput" class="search-input" placeholder="Quick search documents or categories (e.g., 'Darlington', 'Witness', 'Report')...">
+        <button id="searchClearBtn" class="search-clear-btn" title="Clear search">✕</button>
       </div>
-      <div class="view-toggles">
+      
+      <div class="action-group">
+        <button id="btnToggleAdvSearch" class="btn btn-secondary">🔍 Advanced Search</button>
+        <button id="btnColumnOptions" class="btn btn-secondary">⚙️ Columns</button>
         <button id="btnTable" class="btn active">📋 Table View</button>
         <button id="btnTree" class="btn">🌳 Tree View</button>
       </div>
     </div>
 
+    <!-- Advanced Search Drawer -->
+    <div id="advSearchPanel" class="advanced-search-panel">
+      <div class="adv-grid">
+        <div class="adv-field">
+          <label class="adv-label" for="advName">Document Name</label>
+          <input type="text" id="advName" class="adv-input" placeholder="Contains words...">
+        </div>
+        <div class="adv-field">
+          <label class="adv-label" for="advFolder">Category / Folder</label>
+          <select id="advFolder" class="adv-select">
+            <option value="">All Categories</option>
+          </select>
+        </div>
+        <div class="adv-field">
+          <label class="adv-label" for="advExt">File Type</label>
+          <select id="advExt" class="adv-select">
+            <option value="">All File Extensions</option>
+          </select>
+        </div>
+        <div class="adv-field">
+          <label class="adv-label" for="advMinSize">Min Size (KB)</label>
+          <input type="number" id="advMinSize" class="adv-input" placeholder="e.g. 100" min="0">
+        </div>
+        <div class="adv-field">
+          <label class="adv-label" for="advDateFrom">Modified After</label>
+          <input type="date" id="advDateFrom" class="adv-input">
+        </div>
+        <div class="adv-field">
+          <label class="adv-label" for="advDateTo">Modified Before</label>
+          <input type="date" id="advDateTo" class="adv-input">
+        </div>
+      </div>
+      <div class="adv-actions">
+        <button id="btnResetAdv" class="btn btn-secondary">Reset Filters</button>
+        <button id="btnApplyAdv" class="btn active">Apply Filters</button>
+      </div>
+    </div>
+
+    <!-- Active Filter Tags Display -->
+    <div id="filterTagsRow" class="filter-tags-row"></div>
+
     <!-- Table View -->
     <div id="tableView" class="table-container">
       <table>
-        <thead>
-          <tr>
-            <th style="width: 25%;">Folder / Inquiry</th>
-            <th style="width: 45%;">Document Name</th>
-            <th style="width: 12%;">Size</th>
-            <th style="width: 18%;">Action</th>
-          </tr>
+        <thead id="tableHead">
+          <!-- Dynamically populated from active column settings -->
         </thead>
         <tbody id="tableBody">
-          <tr><td colspan="4" class="empty-state">Loading document catalog...</td></tr>
+          <tr><td colspan="7" class="empty-state">Loading document catalog...</td></tr>
         </tbody>
       </table>
     </div>
@@ -487,6 +753,26 @@
       <div id="treeContent" class="tree-root">Loading hierarchy...</div>
     </div>
 
+    <!-- Column Customizer Modal -->
+    <div id="columnModal" class="modal-backdrop">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="modal-title">Customize Table Columns</div>
+          <button id="modalCloseBtn" class="modal-close">&times;</button>
+        </div>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1rem;">
+          Select columns to display and use the up/down arrows to reorder them.
+        </p>
+        <ul id="columnList" class="column-list">
+          <!-- Populated dynamically -->
+        </ul>
+        <div style="display:flex;justify-content:flex-end;gap:0.5rem;">
+          <button id="btnResetColumns" class="btn btn-secondary">Reset Defaults</button>
+          <button id="btnSaveColumns" class="btn active">Save & Apply</button>
+        </div>
+      </div>
+    </div>
+
     <footer>
       <p>Automated Indexing with GitHub Actions • Source: <a href="https://committees.parliament.sa.gov.au/committee/451/Public%20Works%20Committee/56/56th%20Parliament%2005%2F05%2F2026%20-%20Current/56" target="_blank" rel="noopener">Parliament of South Australia Public Works Committee</a></p>
     </footer>
@@ -497,6 +783,56 @@
     const COMMITTEE_ID = 451;
     const API_BASE = "https://committees-api.parliament.sa.gov.au/api";
 
+    // All available column definitions
+    const ALL_COLUMNS = [
+      { id: 'folder', name: 'Folder / Category', defaultVisible: true, sortKey: 'folder_path' },
+      { id: 'name', name: 'Document Name', defaultVisible: true, sortKey: 'name' },
+      { id: 'ext', name: 'Extension', defaultVisible: false, sortKey: 'extension' },
+      { id: 'size', name: 'File Size', defaultVisible: true, sortKey: 'size_bytes' },
+      { id: 'modified', name: 'Last Modified', defaultVisible: true, sortKey: 'last_modified' },
+      { id: 'discovered', name: 'Indexed Date', defaultVisible: false, sortKey: 'discovered_at' },
+      { id: 'action', name: 'Action', defaultVisible: true, sortKey: null }
+    ];
+
+    // User column preferences (stored in localStorage)
+    let userColumns = loadColumnPreferences();
+
+    // Sorting state
+    let sortState = {
+      columnId: 'folder',
+      direction: 'asc' // 'asc' or 'desc'
+    };
+
+    // Advanced search filters
+    let advFilters = {
+      name: '',
+      folder: '',
+      ext: '',
+      minSizeKb: null,
+      dateFrom: '',
+      dateTo: ''
+    };
+
+    function loadColumnPreferences() {
+      const saved = localStorage.getItem('pwc_table_columns_v1');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed;
+          }
+        } catch(e) {}
+      }
+      return ALL_COLUMNS.map(c => ({ id: c.id, visible: c.defaultVisible }));
+    }
+
+    function saveColumnPreferences(cols) {
+      userColumns = cols;
+      localStorage.setItem('pwc_table_columns_v1', JSON.stringify(cols));
+      renderTableHeaders();
+      renderTable();
+    }
+
     async function loadCatalog() {
       try {
         const resp = await fetch('data/catalog.json');
@@ -505,7 +841,6 @@
         
         document.getElementById('docCount').textContent = catalog.total_documents || (catalog.documents ? catalog.documents.length : 0);
         
-        // Count total unique folders
         const folders = new Set((catalog.documents || []).map(d => d.folder_path || 'Root'));
         document.getElementById('folderCount').textContent = folders.size;
 
@@ -514,11 +849,41 @@
           document.getElementById('lastSync').textContent = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         }
         
+        populateAdvancedFilterOptions();
+        renderTableHeaders();
         renderTable();
         renderTree();
       } catch (err) {
-        document.getElementById('tableBody').innerHTML = `<tr><td colspan="4" class="empty-state">Unable to load catalog data (data/catalog.json). Error: ${err.message}</td></tr>`;
+        document.getElementById('tableBody').innerHTML = `<tr><td colspan="7" class="empty-state">Unable to load catalog data (data/catalog.json). Error: ${err.message}</td></tr>`;
       }
+    }
+
+    function populateAdvancedFilterOptions() {
+      const folderSelect = document.getElementById('advFolder');
+      const extSelect = document.getElementById('advExt');
+      
+      const folders = new Set();
+      const exts = new Set();
+
+      (catalog.documents || []).forEach(d => {
+        if (d.folder_path) folders.add(d.folder_path);
+        const ext = d.extension || (d.name ? d.name.substring(d.name.lastIndexOf('.')) : '');
+        if (ext) exts.add(ext.toLowerCase());
+      });
+
+      Array.from(folders).sort().forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f;
+        opt.textContent = f;
+        folderSelect.appendChild(opt);
+      });
+
+      Array.from(exts).sort().forEach(e => {
+        const opt = document.createElement('option');
+        opt.value = e;
+        opt.textContent = e.toUpperCase();
+        extSelect.appendChild(opt);
+      });
     }
 
     function formatBytes(bytes) {
@@ -529,7 +894,284 @@
       return (bytes / Math.pow(k, i)).toFixed(1) + ' ' + sizes[i];
     }
 
-    // Handles downloading with freshly requested link or saved link
+    function formatDate(isoStr) {
+      if (!isoStr) return '-';
+      const d = new Date(isoStr);
+      if (isNaN(d.getTime())) return isoStr.substring(0, 10);
+      return d.toISOString().substring(0, 10);
+    }
+
+    /* Column Customizer UI */
+    function renderColumnCustomizer() {
+      const listEl = document.getElementById('columnList');
+      listEl.innerHTML = userColumns.map((col, idx) => {
+        const def = ALL_COLUMNS.find(c => c.id === col.id) || { name: col.id };
+        const isUpDisabled = idx === 0 ? 'disabled style="opacity:0.3;cursor:not-allowed;"' : '';
+        const isDownDisabled = idx === userColumns.length - 1 ? 'disabled style="opacity:0.3;cursor:not-allowed;"' : '';
+        return `
+          <li class="column-item">
+            <div class="column-item-left">
+              <input type="checkbox" id="col_chk_${col.id}" ${col.visible ? 'checked' : ''}>
+              <label for="col_chk_${col.id}" style="cursor:pointer;">${escapeHtml(def.name)}</label>
+            </div>
+            <div class="column-item-actions">
+              <button class="btn-icon" onclick="moveColumn(${idx}, -1)" ${isUpDisabled} title="Move Up">▲</button>
+              <button class="btn-icon" onclick="moveColumn(${idx}, 1)" ${isDownDisabled} title="Move Down">▼</button>
+            </div>
+          </li>
+        `;
+      }).join('');
+    }
+
+    window.moveColumn = function(index, delta) {
+      const targetIndex = index + delta;
+      if (targetIndex < 0 || targetIndex >= userColumns.length) return;
+      const temp = userColumns[index];
+      userColumns[index] = userColumns[targetIndex];
+      userColumns[targetIndex] = temp;
+      renderColumnCustomizer();
+    };
+
+    function renderTableHeaders() {
+      const thead = document.getElementById('tableHead');
+      const activeCols = userColumns.filter(c => c.visible);
+      let html = '<tr>';
+
+      activeCols.forEach(col => {
+        const def = ALL_COLUMNS.find(c => c.id === col.id) || { name: col.id, sortKey: null };
+        const isSorted = sortState.columnId === col.id;
+        const sortIcon = isSorted ? (sortState.direction === 'asc' ? '▲' : '▼') : '↕';
+        const sortClass = isSorted ? 'sort-active' : '';
+
+        if (def.sortKey) {
+          html += `
+            <th class="${sortClass}" onclick="handleSortClick('${col.id}')">
+              ${escapeHtml(def.name)}
+              <span class="sort-indicator">${sortIcon}</span>
+            </th>
+          `;
+        } else {
+          html += `<th>${escapeHtml(def.name)}</th>`;
+        }
+      });
+
+      html += '</tr>';
+      thead.innerHTML = html;
+    }
+
+    window.handleSortClick = function(columnId) {
+      if (sortState.columnId === columnId) {
+        sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortState.columnId = columnId;
+        sortState.direction = 'asc';
+      }
+      renderTableHeaders();
+      renderTable();
+    };
+
+    /* Filtering & Sorting Documents */
+    function getFilteredAndSortedDocuments() {
+      const q = document.getElementById('searchInput').value.trim().toLowerCase();
+      
+      let list = (catalog.documents || []).filter(doc => {
+        // Simple search
+        if (q) {
+          const name = (doc.name || '').toLowerCase();
+          const folder = (doc.folder_path || '').toLowerCase();
+          const ext = (doc.extension || '').toLowerCase();
+          if (!name.includes(q) && !folder.includes(q) && !ext.includes(q)) return false;
+        }
+
+        // Advanced filter: Name
+        if (advFilters.name && !doc.name.toLowerCase().includes(advFilters.name.toLowerCase())) {
+          return false;
+        }
+
+        // Advanced filter: Folder
+        if (advFilters.folder && doc.folder_path !== advFilters.folder) {
+          return false;
+        }
+
+        // Advanced filter: Extension
+        if (advFilters.ext) {
+          const docExt = (doc.extension || (doc.name ? doc.name.substring(doc.name.lastIndexOf('.')) : '')).toLowerCase();
+          if (docExt !== advFilters.ext.toLowerCase()) return false;
+        }
+
+        // Advanced filter: Min Size
+        if (advFilters.minSizeKb !== null && advFilters.minSizeKb > 0) {
+          const sizeKb = (doc.size_bytes || 0) / 1024;
+          if (sizeKb < advFilters.minSizeKb) return false;
+        }
+
+        // Advanced filter: Modified Dates
+        if (advFilters.dateFrom && doc.last_modified) {
+          if (doc.last_modified.substring(0, 10) < advFilters.dateFrom) return false;
+        }
+        if (advFilters.dateTo && doc.last_modified) {
+          if (doc.last_modified.substring(0, 10) > advFilters.dateTo) return false;
+        }
+
+        return true;
+      });
+
+      // Sorting
+      const def = ALL_COLUMNS.find(c => c.id === sortState.columnId);
+      if (def && def.sortKey) {
+        const key = def.sortKey;
+        const dir = sortState.direction === 'asc' ? 1 : -1;
+        list.sort((a, b) => {
+          let valA = a[key];
+          let valB = b[key];
+
+          if (valA === undefined || valA === null) valA = '';
+          if (valB === undefined || valB === null) valB = '';
+
+          if (typeof valA === 'number' && typeof valB === 'number') {
+            return (valA - valB) * dir;
+          }
+
+          return String(valA).localeCompare(String(valB), undefined, { numeric: true, sensitivity: 'base' }) * dir;
+        });
+      }
+
+      return list;
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('tableBody');
+      const filtered = getFilteredAndSortedDocuments();
+      const activeCols = userColumns.filter(c => c.visible);
+
+      renderFilterPills();
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="${activeCols.length || 1}" class="empty-state">No matching documents found. Try adjusting your query or filters.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(doc => {
+        let rowHtml = '<tr>';
+        activeCols.forEach(col => {
+          switch (col.id) {
+            case 'folder':
+              const folder = doc.folder_path || 'Root';
+              rowHtml += `<td><span class="folder-tag" onclick="filterFolder('${escapeQuotes(folder)}')">📁 ${escapeHtml(folder)}</span></td>`;
+              break;
+            case 'name':
+              rowHtml += `<td><div class="doc-name">${escapeHtml(doc.name)}</div></td>`;
+              break;
+            case 'ext':
+              const ext = doc.extension || (doc.name ? doc.name.substring(doc.name.lastIndexOf('.')) : '-');
+              rowHtml += `<td class="ext-col"><code style="font-size:0.8rem;background:rgba(255,255,255,0.06);padding:0.15rem 0.35rem;border-radius:3px;">${escapeHtml(ext)}</code></td>`;
+              break;
+            case 'size':
+              rowHtml += `<td class="size-col">${formatBytes(doc.size_bytes)}</td>`;
+              break;
+            case 'modified':
+              rowHtml += `<td class="date-col">${formatDate(doc.last_modified)}</td>`;
+              break;
+            case 'discovered':
+              rowHtml += `<td class="date-col">${formatDate(doc.discovered_at)}</td>`;
+              break;
+            case 'action':
+              rowHtml += `
+                <td>
+                  <button class="btn-download" onclick="triggerDownload('${doc.id}', '${escapeQuotes(doc.download_url || '')}', this)">⬇ Download</button>
+                </td>
+              `;
+              break;
+            default:
+              rowHtml += `<td>-</td>`;
+          }
+        });
+        rowHtml += '</tr>';
+        return rowHtml;
+      }).join('');
+    }
+
+    function renderFilterPills() {
+      const container = document.getElementById('filterTagsRow');
+      const pills = [];
+
+      const q = document.getElementById('searchInput').value.trim();
+      if (q) {
+        pills.push({ label: `Text: "${q}"`, clear: () => {
+          document.getElementById('searchInput').value = '';
+          updateClearBtn();
+          renderTable();
+        }});
+      }
+
+      if (advFilters.name) {
+        pills.push({ label: `Name: "${advFilters.name}"`, clear: () => { advFilters.name = ''; syncAdvInputs(); renderTable(); }});
+      }
+      if (advFilters.folder) {
+        pills.push({ label: `Folder: ${advFilters.folder}`, clear: () => { advFilters.folder = ''; syncAdvInputs(); renderTable(); }});
+      }
+      if (advFilters.ext) {
+        pills.push({ label: `Ext: ${advFilters.ext.toUpperCase()}`, clear: () => { advFilters.ext = ''; syncAdvInputs(); renderTable(); }});
+      }
+      if (advFilters.minSizeKb) {
+        pills.push({ label: `Min Size: ${advFilters.minSizeKb}KB`, clear: () => { advFilters.minSizeKb = null; syncAdvInputs(); renderTable(); }});
+      }
+      if (advFilters.dateFrom) {
+        pills.push({ label: `From: ${advFilters.dateFrom}`, clear: () => { advFilters.dateFrom = ''; syncAdvInputs(); renderTable(); }});
+      }
+      if (advFilters.dateTo) {
+        pills.push({ label: `To: ${advFilters.dateTo}`, clear: () => { advFilters.dateTo = ''; syncAdvInputs(); renderTable(); }});
+      }
+
+      if (pills.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+
+      container.innerHTML = pills.map((p, i) => `
+        <span class="filter-tag-pill">
+          ${escapeHtml(p.label)}
+          <span class="remove-pill" onclick="window.clearPill(${i})">&times;</span>
+        </span>
+      `).join('') + `<button class="btn btn-secondary" style="padding:0.2rem 0.5rem;font-size:0.75rem;" onclick="clearAllFilters()">Clear All</button>`;
+
+      window._activePills = pills;
+    }
+
+    window.clearPill = function(idx) {
+      if (window._activePills && window._activePills[idx]) {
+        window._activePills[idx].clear();
+      }
+    };
+
+    window.clearAllFilters = function() {
+      document.getElementById('searchInput').value = '';
+      updateClearBtn();
+      advFilters = { name: '', folder: '', ext: '', minSizeKb: null, dateFrom: '', dateTo: '' };
+      syncAdvInputs();
+      renderTable();
+    };
+
+    function syncAdvInputs() {
+      document.getElementById('advName').value = advFilters.name || '';
+      document.getElementById('advFolder').value = advFilters.folder || '';
+      document.getElementById('advExt').value = advFilters.ext || '';
+      document.getElementById('advMinSize').value = advFilters.minSizeKb || '';
+      document.getElementById('advDateFrom').value = advFilters.dateFrom || '';
+      document.getElementById('advDateTo').value = advFilters.dateTo || '';
+    }
+
+    function filterFolder(folderName) {
+      document.getElementById('searchInput').value = '';
+      updateClearBtn();
+      advFilters.folder = folderName;
+      syncAdvInputs();
+      renderTable();
+      if (document.getElementById('tableView').style.display === 'none') {
+        document.getElementById('btnTable').click();
+      }
+    }
+
     async function triggerDownload(fileId, originalLink, btnElement) {
       if (btnElement) {
         btnElement.classList.add('loading');
@@ -537,7 +1179,6 @@
       }
 
       try {
-        // Try requesting fresh SAS token
         const resp = await fetch(`${API_BASE}/CommitteeFileDownloadLink?committeeId=${COMMITTEE_ID}&fileId=${fileId}`);
         if (resp.ok) {
           const data = await resp.json();
@@ -554,7 +1195,6 @@
         console.warn('API link request failed, falling back to cached link:', e);
       }
 
-      // Fallback to cached link or official portal
       if (originalLink) {
         window.open(originalLink, '_blank');
       } else {
@@ -567,53 +1207,11 @@
       }
     }
 
-    function renderTable() {
-      const q = document.getElementById('searchInput').value.trim().toLowerCase();
-      const tbody = document.getElementById('tableBody');
-      const filtered = (catalog.documents || []).filter(doc => {
-        if (!q) return true;
-        const name = (doc.name || '').toLowerCase();
-        const folder = (doc.folder_path || '').toLowerCase();
-        return name.includes(q) || folder.includes(q);
-      });
-
-      if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="empty-state">No matching documents found.</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = filtered.map(doc => {
-        const folder = doc.folder_path || 'Root';
-        return `
-          <tr>
-            <td>
-              <span class="folder-tag" onclick="filterFolder('${escapeQuotes(folder)}')">📁 ${escapeHtml(folder)}</span>
-            </td>
-            <td><div class="doc-name">${escapeHtml(doc.name)}</div></td>
-            <td class="size-col">${formatBytes(doc.size_bytes)}</td>
-            <td>
-              <div class="action-links">
-                <button class="btn-download" onclick="triggerDownload('${doc.id}', '${escapeQuotes(doc.download_url || '')}', this)">⬇ Download</button>
-              </div>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    function filterFolder(folderName) {
-      const input = document.getElementById('searchInput');
-      input.value = folderName;
-      renderTable();
-      if (document.getElementById('tableView').style.display === 'none') {
-        document.getElementById('btnTable').click();
-      }
-    }
-
+    /* Interactive Tree */
     function buildTreeFromDocuments(docs) {
       const root = { name: "Public", path: "", folders: {}, files: [] };
       for (const d of docs) {
-        const parts = d.folder_path ? d.folder_path.split('/') : [];
+        const parts = d.folder_path ? d.folder_path.split("/") : [];
         let curr = root;
         let accumPath = "";
         for (const part of parts) {
@@ -633,40 +1231,41 @@
       const hasChildren = folderKeys.length > 0 || (node.files && node.files.length > 0);
       const totalDocsInFolder = countDocs(node);
 
-      let html = `<div class="tree-node ${isRoot ? 'root-level' : ''}">`;
-      
+      let html = `<div class="tree-node ${isRoot ? "root-level" : ""}">`;
+
+      const isCollapsed = !isRoot;
       html += `
         <div class="tree-node-content">
-          ${hasChildren ? `<span class="tree-expander" onclick="toggleTreeNode(this)">▼</span>` : `<span class="tree-expander"></span>`}
+          ${hasChildren ? `<span class="tree-expander" onclick="toggleTreeNode(this)">${isCollapsed ? "▶" : "▼"}</span>` : `<span class="tree-expander"></span>`}
           <span class="tree-folder-title" onclick="toggleTreeNode(this)">📁 ${escapeHtml(node.name)}</span>
-          <span class="tree-count-badge">${totalDocsInFolder} ${totalDocsInFolder === 1 ? 'file' : 'files'}</span>
+          <span class="tree-count-badge">${totalDocsInFolder} ${totalDocsInFolder === 1 ? "file" : "files"}</span>
         </div>
       `;
 
       if (hasChildren) {
-        html += `<div class="tree-children">`;
+        html += `<div class="tree-children ${isCollapsed ? "collapsed" : ""}">`;
 
-        // Render subfolders
-        folderKeys.sort().forEach(k => {
+        folderKeys.sort().forEach((k) => {
           html += renderTreeNode(node.folders[k], false);
         });
 
-        // Render files
         if (node.files && node.files.length > 0) {
-          node.files.sort((a,b) => a.name.localeCompare(b.name)).forEach(file => {
-            html += `
-              <div class="tree-node">
-                <div class="tree-node-content">
-                  <span class="tree-expander"></span>
-                  <span class="tree-file-title">📄 ${escapeHtml(file.name)}</span>
-                  <span class="size-col">(${formatBytes(file.size_bytes)})</span>
-                  <div style="margin-left:auto;">
-                    <button class="btn-download" style="padding:0.2rem 0.5rem;font-size:0.75rem;" onclick="triggerDownload('${file.id}', '${escapeQuotes(file.download_url || '')}', this)">⬇ Download</button>
+          node.files
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .forEach((file) => {
+              html += `
+                <div class="tree-node">
+                  <div class="tree-node-content">
+                    <span class="tree-expander"></span>
+                    <span class="tree-file-title">📄 ${escapeHtml(file.name)}</span>
+                    <span class="size-col">(${formatBytes(file.size_bytes)})</span>
+                    <div style="margin-left:auto;">
+                      <button class="btn-download" style="padding:0.2rem 0.5rem;font-size:0.75rem;" onclick="triggerDownload('${file.id}', '${escapeQuotes(file.download_url || "")}', this)">⬇ Download</button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            `;
-          });
+              `;
+            });
         }
 
         html += `</div>`;
@@ -677,7 +1276,7 @@
     }
 
     function countDocs(node) {
-      let count = (node.files ? node.files.length : 0);
+      let count = node.files ? node.files.length : 0;
       if (node.folders) {
         for (const k of Object.keys(node.folders)) {
           count += countDocs(node.folders[k]);
@@ -687,22 +1286,22 @@
     }
 
     function toggleTreeNode(element) {
-      const nodeContent = element.closest('.tree-node-content');
-      const expander = nodeContent.querySelector('.tree-expander');
+      const nodeContent = element.closest(".tree-node-content");
+      const expander = nodeContent.querySelector(".tree-expander");
       const childrenContainer = nodeContent.nextElementSibling;
       if (!childrenContainer) return;
 
-      if (childrenContainer.classList.contains('collapsed')) {
-        childrenContainer.classList.remove('collapsed');
-        if (expander) expander.textContent = '▼';
+      if (childrenContainer.classList.contains("collapsed")) {
+        childrenContainer.classList.remove("collapsed");
+        if (expander) expander.textContent = "▼";
       } else {
-        childrenContainer.classList.add('collapsed');
-        if (expander) expander.textContent = '▶';
+        childrenContainer.classList.add("collapsed");
+        if (expander) expander.textContent = "▶";
       }
     }
 
     function renderTree() {
-      const container = document.getElementById('treeContent');
+      const container = document.getElementById("treeContent");
       if (!catalog.documents || catalog.documents.length === 0) {
         container.innerHTML = '<div class="empty-state">No documents available in catalog.</div>';
         return;
@@ -711,19 +1310,41 @@
       container.innerHTML = renderTreeNode(tree, true);
     }
 
+    function updateClearBtn() {
+      const input = document.getElementById('searchInput');
+      const btn = document.getElementById('searchClearBtn');
+      if (input.value.length > 0) {
+        btn.classList.add('visible');
+      } else {
+        btn.classList.remove('visible');
+      }
+    }
+
     function escapeHtml(text) {
-      if (!text) return '';
+      if (!text) return "";
       return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
     function escapeQuotes(text) {
-      if (!text) return '';
-      return text.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      if (!text) return "";
+      return text.replace(/'/g, "\\'").replace(/"/g, "&quot;");
     }
 
-    // View toggles
-    document.getElementById('searchInput').addEventListener('input', renderTable);
+    // Search events
+    const searchInput = document.getElementById('searchInput');
+    searchInput.addEventListener('input', () => {
+      updateClearBtn();
+      renderTable();
+    });
 
+    document.getElementById('searchClearBtn').addEventListener('click', () => {
+      searchInput.value = '';
+      updateClearBtn();
+      searchInput.focus();
+      renderTable();
+    });
+
+    // View toggles
     document.getElementById('btnTable').addEventListener('click', () => {
       document.getElementById('btnTable').classList.add('active');
       document.getElementById('btnTree').classList.remove('active');
@@ -738,17 +1359,75 @@
       document.getElementById('tableView').style.display = 'none';
     });
 
-    document.getElementById('btnExpandAll').addEventListener('click', () => {
-      document.querySelectorAll('.tree-children').forEach(el => el.classList.remove('collapsed'));
-      document.querySelectorAll('.tree-expander').forEach(el => {
-        if (el.textContent.trim()) el.textContent = '▼';
+    // Advanced search toggle
+    document.getElementById('btnToggleAdvSearch').addEventListener('click', () => {
+      const panel = document.getElementById('advSearchPanel');
+      panel.classList.toggle('open');
+      document.getElementById('btnToggleAdvSearch').classList.toggle('active', panel.classList.contains('open'));
+    });
+
+    document.getElementById('btnApplyAdv').addEventListener('click', () => {
+      advFilters.name = document.getElementById('advName').value.trim();
+      advFilters.folder = document.getElementById('advFolder').value;
+      advFilters.ext = document.getElementById('advExt').value;
+      const minSize = parseFloat(document.getElementById('advMinSize').value);
+      advFilters.minSizeKb = !isNaN(minSize) && minSize > 0 ? minSize : null;
+      advFilters.dateFrom = document.getElementById('advDateFrom').value;
+      advFilters.dateTo = document.getElementById('advDateTo').value;
+      renderTable();
+    });
+
+    document.getElementById('btnResetAdv').addEventListener('click', () => {
+      advFilters = { name: '', folder: '', ext: '', minSizeKb: null, dateFrom: '', dateTo: '' };
+      syncAdvInputs();
+      renderTable();
+    });
+
+    // Column modal events
+    const columnModal = document.getElementById('columnModal');
+    document.getElementById('btnColumnOptions').addEventListener('click', () => {
+      renderColumnCustomizer();
+      columnModal.classList.add('open');
+    });
+
+    document.getElementById('modalCloseBtn').addEventListener('click', () => {
+      columnModal.classList.remove('open');
+    });
+
+    columnModal.addEventListener('click', (e) => {
+      if (e.target === columnModal) columnModal.classList.remove('open');
+    });
+
+    document.getElementById('btnSaveColumns').addEventListener('click', () => {
+      userColumns.forEach(c => {
+        const chk = document.getElementById(`col_chk_${c.id}`);
+        if (chk) c.visible = chk.checked;
+      });
+      // Ensure at least one column remains visible
+      if (!userColumns.some(c => c.visible)) {
+        userColumns[0].visible = true;
+      }
+      saveColumnPreferences(userColumns);
+      columnModal.classList.remove('open');
+    });
+
+    document.getElementById('btnResetColumns').addEventListener('click', () => {
+      userColumns = ALL_COLUMNS.map(c => ({ id: c.id, visible: c.defaultVisible }));
+      renderColumnCustomizer();
+    });
+
+    // Tree actions
+    document.getElementById("btnExpandAll").addEventListener("click", () => {
+      document.querySelectorAll(".tree-children").forEach((el) => el.classList.remove("collapsed"));
+      document.querySelectorAll(".tree-expander").forEach((el) => {
+        if (el.textContent.trim()) el.textContent = "▼";
       });
     });
 
-    document.getElementById('btnCollapseAll').addEventListener('click', () => {
-      document.querySelectorAll('.tree-children').forEach(el => el.classList.add('collapsed'));
-      document.querySelectorAll('.tree-expander').forEach(el => {
-        if (el.textContent.trim()) el.textContent = '▶';
+    document.getElementById("btnCollapseAll").addEventListener("click", () => {
+      document.querySelectorAll(".tree-children").forEach((el) => el.classList.add("collapsed"));
+      document.querySelectorAll(".tree-expander").forEach((el) => {
+        if (el.textContent.trim()) el.textContent = "▶";
       });
     });
 
