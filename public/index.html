@@ -1125,7 +1125,7 @@
             case 'action':
               rowHtml += `
                 <td>
-                  <button class="btn-download" onclick="triggerDownload('${doc.id}', '${escapeQuotes(doc.download_url || '')}', this)">⬇ Download</button>
+                  <button class="btn-download" onclick="triggerDownload('${doc.id}', this)">⬇ Download</button>
                 </td>
               `;
               break;
@@ -1219,7 +1219,7 @@
       }
     }
 
-    async function triggerDownload(fileId, originalLink, btnElement) {
+    async function triggerDownload(fileId, btnElement) {
       if (btnElement) {
         btnElement.classList.add('loading');
         btnElement.textContent = 'Opening...';
@@ -1238,13 +1238,9 @@
             return;
           }
         }
+        throw new Error('API did not return a valid download link');
       } catch (e) {
-        console.warn('API link request failed, falling back to cached link:', e);
-      }
-
-      if (originalLink) {
-        window.open(originalLink, '_blank');
-      } else {
+        console.warn('API link request failed, falling back to committee portal:', e);
         window.open(`https://committees.parliament.sa.gov.au/committee/451/Public%20Works%20Committee/56/56th%20Parliament%2005%2F05%2F2026%20-%20Current/56`, '_blank');
       }
 
@@ -1307,7 +1303,7 @@
                     <span class="tree-file-title">📄 <a href="documents/${file.id}.html" style="color:var(--text-main);text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${escapeHtml(file.name)}</a></span>
                     <span class="size-col">(${formatBytes(file.size_bytes)})</span>
                     <div style="margin-left:auto;">
-                      <button class="btn-download" style="padding:0.2rem 0.5rem;font-size:0.75rem;" onclick="triggerDownload('${file.id}', '${escapeQuotes(file.download_url || "")}', this)">⬇ Download</button>
+                      <button class="btn-download" style="padding:0.2rem 0.5rem;font-size:0.75rem;" onclick="triggerDownload('${file.id}', this)">⬇ Download</button>
                     </div>
                   </div>
                 </div>

@@ -225,7 +225,7 @@ DOCUMENT_TEMPLATE = """<!DOCTYPE html>
     const FILE_ID = "{file_id}";
     const COMMITTEE_ID = 451;
     const API_BASE = "https://committees-api.parliament.sa.gov.au/api";
-    const FALLBACK_URL = "{cached_download_url}";
+    const COMMITTEE_PORTAL = "{committee_portal}";
 
     async function triggerDownload() {{
       const btn = document.getElementById('dlBtn');
@@ -243,15 +243,12 @@ DOCUMENT_TEMPLATE = """<!DOCTYPE html>
             return;
           }}
         }}
+        throw new Error('Could not retrieve active token from API');
       }} catch(e) {{
-        console.warn('Direct token acquisition failed, attempting cached link', e);
+        console.warn('Direct token acquisition failed, redirecting to committee portal', e);
+        window.open(COMMITTEE_PORTAL, "_blank");
       }}
 
-      if (FALLBACK_URL) {{
-        window.location.href = FALLBACK_URL;
-      }} else {{
-        window.open("{committee_portal}", "_blank");
-      }}
       btn.classList.remove('loading');
       btn.textContent = '⬇ Download Document';
     }}
@@ -320,7 +317,6 @@ def generate_seo_assets(catalog_path: str = "public/data/catalog.json", output_d
             size_display=html.escape(size_str),
             date_display=html.escape(mod_date),
             file_id=file_id,
-            cached_download_url=doc.get("download_url") or "",
             committee_portal=COMMITTEE_PORTAL
         )
 

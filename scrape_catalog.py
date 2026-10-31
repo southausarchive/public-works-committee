@@ -145,9 +145,8 @@ class CommitteeScraper:
             download_url = existing.get("download_url")
 
             # Fetch detailed metadata if missing
-            if not last_modified or not download_url:
+            if not last_modified:
                 meta = self.get_file_metadata(file_id)
-                download_url = meta.get("DownloadLink") or download_url
                 last_modified = meta.get("TimeLastModified") or existing.get("last_modified")
                 title = meta.get("Title") or title
                 if meta.get("FileSize"):
@@ -164,7 +163,6 @@ class CommitteeScraper:
                 "folder_path": folder_path,
                 "discovered_at": existing.get("discovered_at") or datetime.now(timezone.utc).isoformat(),
                 "last_modified": last_modified or "",
-                "download_url": download_url,
                 "direct_api_url": f"{API_BASE}/CommitteeFileDownloadLink?committeeId={self.committee_id}&fileId={file_id}",
                 "committee_url": COMMITTEE_PAGE_URL
             }
@@ -225,8 +223,9 @@ class CommitteeScraper:
             ext = doc.get("extension", "")
             size_kb = f"{(doc.get('size_bytes', 0) / 1024):.1f} KB" if doc.get('size_bytes') else "-"
             mod_date = doc.get("last_modified", "")[:10] if doc.get("last_modified") else "-"
-            direct_link = doc.get("download_url")
-            link_str = f"[Download]({direct_link})" if direct_link else "Download via Portal"
+            doc_id = doc.get("id")
+            landing_url = f"https://southausarchive.github.io/public-works-committee/documents/{doc_id}.html"
+            link_str = f"[Download / Details]({landing_url})"
             md_lines.append(f"| `{folder}` | **{name}** | `{ext}` | {size_kb} | {mod_date} | {link_str} |")
 
         os.makedirs(os.path.dirname(os.path.abspath(catalog_md_path)), exist_ok=True)
