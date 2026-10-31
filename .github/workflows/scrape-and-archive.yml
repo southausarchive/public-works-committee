@@ -2,8 +2,8 @@ name: Scrape Committee & Deploy Catalog
 
 on:
   schedule:
-    # Run every Monday at 03:00 UTC
-    - cron: '0 3 * * 1'
+    # Run every 20 hours to keep 24-hour SAS tokens fresh
+    - cron: '0 */20 * * *'
   workflow_dispatch:
     inputs:
       limit:

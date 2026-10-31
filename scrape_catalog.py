@@ -142,17 +142,16 @@ class CommitteeScraper:
 
             existing = self.manifest["documents"].get(file_id, {})
             last_modified = existing.get("last_modified")
-            download_url = existing.get("download_url")
 
-            # Fetch detailed metadata if missing
-            if not last_modified:
-                meta = self.get_file_metadata(file_id)
-                last_modified = meta.get("TimeLastModified") or existing.get("last_modified")
-                title = meta.get("Title") or title
-                if meta.get("FileSize"):
-                    file_size = meta.get("FileSize")
-                if meta.get("FileExtension"):
-                    file_ext = meta.get("FileExtension")
+            # Always fetch fresh DownloadLink so SAS tokens are updated on every run
+            meta = self.get_file_metadata(file_id)
+            download_url = meta.get("DownloadLink") or existing.get("download_url") or ""
+            last_modified = meta.get("TimeLastModified") or last_modified
+            title = meta.get("Title") or title
+            if meta.get("FileSize"):
+                file_size = meta.get("FileSize")
+            if meta.get("FileExtension"):
+                file_ext = meta.get("FileExtension")
 
             record = {
                 "id": file_id,
@@ -163,6 +162,7 @@ class CommitteeScraper:
                 "folder_path": folder_path,
                 "discovered_at": existing.get("discovered_at") or datetime.now(timezone.utc).isoformat(),
                 "last_modified": last_modified or "",
+                "download_url": download_url,
                 "direct_api_url": f"{API_BASE}/CommitteeFileDownloadLink?committeeId={self.committee_id}&fileId={file_id}",
                 "committee_url": COMMITTEE_PAGE_URL
             }

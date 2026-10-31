@@ -210,7 +210,7 @@ DOCUMENT_TEMPLATE = """<!DOCTYPE html>
       </div>
 
       <div class="download-action">
-        <button id="dlBtn" class="btn-download" onclick="triggerDownload()">⬇ Download Document</button>
+        <a id="dlBtn" class="btn-download" href="{download_url}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:inline-block;">⬇ Download Document</a>
         <a href="{committee_portal}" target="_blank" rel="noopener" class="btn-portal">🏛️ View on Committee Portal ↗</a>
       </div>
     </div>
@@ -220,39 +220,6 @@ DOCUMENT_TEMPLATE = """<!DOCTYPE html>
       <p style="margin-top:0.5rem;">Archive managed for public research • Source: Parliament of South Australia</p>
     </footer>
   </div>
-
-  <script>
-    const FILE_ID = "{file_id}";
-    const COMMITTEE_ID = 451;
-    const API_BASE = "https://committees-api.parliament.sa.gov.au/api";
-    const COMMITTEE_PORTAL = "{committee_portal}";
-
-    async function triggerDownload() {{
-      const btn = document.getElementById('dlBtn');
-      btn.classList.add('loading');
-      btn.textContent = 'Resolving Access Token...';
-
-      try {{
-        const resp = await fetch(`${{API_BASE}}/CommitteeFileDownloadLink?committeeId=${{COMMITTEE_ID}}&fileId=${{FILE_ID}}`);
-        if (resp.ok) {{
-          const data = await resp.json();
-          if (data && data.DownloadLink) {{
-            window.location.href = data.DownloadLink;
-            btn.classList.remove('loading');
-            btn.textContent = '⬇ Download Document';
-            return;
-          }}
-        }}
-        throw new Error('Could not retrieve active token from API');
-      }} catch(e) {{
-        console.warn('Direct token acquisition failed, redirecting to committee portal', e);
-        window.open(COMMITTEE_PORTAL, "_blank");
-      }}
-
-      btn.classList.remove('loading');
-      btn.textContent = '⬇ Download Document';
-    }}
-  </script>
 </body>
 </html>
 """
@@ -317,6 +284,7 @@ def generate_seo_assets(catalog_path: str = "public/data/catalog.json", output_d
             size_display=html.escape(size_str),
             date_display=html.escape(mod_date),
             file_id=file_id,
+            download_url=doc.get("download_url") or doc.get("direct_api_url") or COMMITTEE_PORTAL,
             committee_portal=COMMITTEE_PORTAL
         )
 
