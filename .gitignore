@@ -1,3 +1,20 @@
+# Dynamically generated catalog and manifest data
 CATALOG.md
-public/data/catalog.json
 data/manifest.json
+public/data/catalog.json
+
+# Dynamically generated SEO pages, sitemap, and robots.txt
+public/documents/
+public/sitemap.xml
+public/robots.txt
+
+# Temporary downloads and caches
+tmp_downloads/
+*.tmp
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
