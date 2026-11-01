@@ -12,7 +12,7 @@ on:
         default: '0'
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -51,7 +51,15 @@ jobs:
             --catalog-json public/data/catalog.json \
             --catalog-md CATALOG.md
 
-      - name: Generate SEO Landing Pages, Sitemap & Robots.txt
+      - name: Sync Permanent Archive to GitHub Releases
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          LIMIT_ARG="${{ github.event.inputs.limit || '0' }}"
+          python release_archive.py "$LIMIT_ARG"
+
+      - name: Generate SEO Landing Pages, Live Resolvers, Sitemap & Archive Index
         run: |
           python generate_seo.py
 
@@ -66,3 +74,10 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Ping Wayback Machine for Archival
+        continue-on-error: true
+        run: |
+          echo "Pinging Wayback Machine Save Page Now for root catalog and archive directory..."
+          curl -s -m 15 -I "https://web.archive.org/save/https://southausarchive.github.io/public-works-committee/" || true
+          curl -s -m 15 -I "https://web.archive.org/save/https://southausarchive.github.io/public-works-committee/archive-index.html" || true

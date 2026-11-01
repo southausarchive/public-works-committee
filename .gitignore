@@ -3,10 +3,13 @@ CATALOG.md
 data/manifest.json
 public/data/catalog.json
 
-# Dynamically generated SEO pages, sitemap, and robots.txt
+# Dynamically generated SEO pages, sitemap, resolvers, and robots.txt
 public/documents/
+public/download/
+public/archive-index.html
 public/sitemap.xml
 public/robots.txt
+public/data/changelog.json
 
 # Temporary downloads and caches
 tmp_downloads/

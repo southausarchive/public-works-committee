@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """
-SEO & Static Page Generator for SA Parliament Public Works Committee Archive.
+SEO, Live Resolver & Static Page Generator for SA Parliament Public Works Committee Archive.
 - Generates dedicated static HTML landing pages for every document (/documents/{id}.html).
-- Embeds Schema.org (JSON-LD) structured metadata for Google Rich Results.
-- Creates XML sitemap (sitemap.xml) and robots.txt for Googlebot crawler discovery.
-- Includes client-side token renewal for seamless file access.
+- Generates permanent live redirect resolvers (/download/{id}.html) for Solution A.
+- Links to permanent immutable GitHub Release assets for Solution B.
+- Generates crawlable plain-HTML archive catalog (/archive-index.html) for Wayback Machine / Heritrix.
+- Embeds Schema.org (JSON-LD) and Dublin Core metadata for Googlebot and Internet Archive.
+- Creates XML sitemap (sitemap.xml) and robots.txt.
 """
 
 import os
@@ -19,11 +21,6 @@ BASE_URL = "https://southausarchive.github.io/public-works-committee"
 COMMITTEE_PORTAL = "https://committees.parliament.sa.gov.au/committee/451/Public%20Works%20Committee/56/56th%20Parliament%2005%2F05%2F2026%20-%20Current/56"
 COMMITTEE_ID = 451
 API_BASE = "https://committees-api.parliament.sa.gov.au/api"
-
-def slugify(text: str) -> str:
-    text = re.sub(r'[^a-zA-Z0-9_\-\s]', '', text)
-    text = re.sub(r'[\s_]+', '-', text.strip())
-    return text.lower()[:80]
 
 def format_bytes(b: int) -> str:
     if not b:
@@ -50,10 +47,20 @@ DOCUMENT_TEMPLATE = """<!DOCTYPE html>
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="SA Parliament Public Works Committee Archive">
 
-  <!-- Schema.org JSON-LD for Googlebot -->
+  <!-- Dublin Core Archival Metadata for Internet Archive / Wayback Machine -->
+  <meta name="DC.title" content="{escaped_title}">
+  <meta name="DC.creator" content="Parliament of South Australia Public Works Committee">
+  <meta name="DC.date" content="{date_display}">
+  <meta name="DC.format" content="application/pdf">
+  <meta name="DC.identifier" content="{canonical_url}">
+
+  <!-- Schema.org JSON-LD for Search Engines -->
   <script type="application/ld+json">
   {schema_json}
   </script>
+
+  <!-- Enclosure hint for web crawlers and archival indexers -->
+  {crawler_enclosures}
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -67,105 +74,125 @@ DOCUMENT_TEMPLATE = """<!DOCTYPE html>
       --text-muted: #8b949e;
       --heading: #f0f6fc;
       --primary: #58a6ff;
-      --accent: #238636;
-      --accent-hover: #2ea043;
-      --badge-bg: #21262d;
-      --folder-color: #f1e05a;
-      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
+      --accent-live: #238636;
+      --accent-live-hover: #2ea043;
+      --accent-archive: #1f6feb;
+      --accent-archive-hover: #388bfd;
+      --radius: 8px;
     }}
-
     * {{ box-sizing: border-box; margin: 0; padding: 0; }}
     body {{
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background-color: var(--bg);
       color: var(--text-main);
-      font-family: var(--font-sans);
       line-height: 1.6;
       padding: 2rem 1rem;
     }}
     .container {{
-      max-width: 900px;
+      max-width: 850px;
       margin: 0 auto;
     }}
     .breadcrumb {{
-      font-size: 0.88rem;
-      margin-bottom: 1.5rem;
+      font-size: 0.85rem;
       color: var(--text-muted);
+      margin-bottom: 1.5rem;
     }}
-    .breadcrumb a {{
-      color: var(--primary);
-      text-decoration: none;
-    }}
+    .breadcrumb a {{ color: var(--primary); text-decoration: none; }}
     .breadcrumb a:hover {{ text-decoration: underline; }}
-    
     .card {{
       background: var(--card-bg);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: var(--radius);
       padding: 2rem;
       margin-bottom: 2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }}
     h1 {{
-      font-size: 1.65rem;
+      font-size: 1.5rem;
       color: var(--heading);
-      margin-bottom: 0.75rem;
+      margin-bottom: 0.5rem;
       line-height: 1.3;
+      word-break: break-word;
     }}
     .meta-grid {{
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 1.25rem;
-      margin: 1.5rem 0;
-      padding: 1.25rem;
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--border);
-      border-radius: 6px;
+      margin: 1.75rem 0;
+      padding: 1.25rem 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
     }}
     .meta-item-label {{
       font-size: 0.75rem;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.05em;
       color: var(--text-muted);
       margin-bottom: 0.25rem;
     }}
     .meta-item-value {{
-      font-size: 0.95rem;
-      color: var(--heading);
       font-weight: 500;
+      color: var(--heading);
+      font-size: 0.95rem;
+    }}
+    .meta-hash {{
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      word-break: break-all;
+      background: rgba(0,0,0,0.25);
+      padding: 0.5rem 0.75rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      margin-top: 0.5rem;
     }}
     .download-action {{
       display: flex;
-      gap: 1rem;
-      align-items: center;
       flex-wrap: wrap;
-      margin-top: 1.75rem;
+      gap: 0.85rem;
+      margin-top: 1.5rem;
     }}
-    .btn-download {{
-      background: var(--accent);
+    .btn-download-live {{
+      background: var(--accent-live);
       color: #fff;
-      padding: 0.75rem 1.5rem;
+      padding: 0.75rem 1.25rem;
       border-radius: 6px;
-      text-decoration: none;
       font-weight: 600;
-      font-size: 1rem;
+      font-size: 0.9rem;
+      text-decoration: none;
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      border: none;
-      cursor: pointer;
-      transition: background 0.2s;
+      transition: background 0.15s ease;
     }}
-    .btn-download:hover {{ background: var(--accent-hover); }}
-    .btn-download.loading {{ background: #388bfd; cursor: wait; }}
+    .btn-download-live:hover {{ background: var(--accent-live-hover); }}
+    .btn-download-archive {{
+      background: var(--accent-archive);
+      color: #fff;
+      padding: 0.75rem 1.25rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background 0.15s ease;
+    }}
+    .btn-download-archive:hover {{ background: var(--accent-archive-hover); }}
     .btn-portal {{
-      background: var(--badge-bg);
+      background: transparent;
+      border: 1px solid var(--border);
       color: var(--text-main);
       padding: 0.75rem 1.25rem;
       border-radius: 6px;
-      text-decoration: none;
+      font-weight: 500;
       font-size: 0.9rem;
-      border: 1px solid var(--border);
-      transition: background 0.2s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.15s ease;
     }}
     .btn-portal:hover {{ background: #30363d; color: var(--heading); }}
     
@@ -209,14 +236,24 @@ DOCUMENT_TEMPLATE = """<!DOCTYPE html>
         </div>
       </div>
 
+      <div>
+        <div class="meta-item-label">Document Verification (SHA-256 Fingerprint)</div>
+        <div class="meta-hash">{sha256_display}</div>
+      </div>
+
       <div class="download-action">
-        <a id="dlBtn" class="btn-download" href="{download_url}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:inline-block;">⬇ Download Document</a>
-        <a href="{committee_portal}" target="_blank" rel="noopener" class="btn-portal">🏛️ View on Committee Portal ↗</a>
+        <a class="btn-download-live" href="{live_resolver_url}" target="_blank" rel="noopener noreferrer">
+          ⚡ Download Live Version
+        </a>
+        {archive_button_html}
+        <a href="{committee_portal}" target="_blank" rel="noopener" class="btn-portal">
+          🏛️ View on Committee Portal ↗
+        </a>
       </div>
     </div>
 
     <footer>
-      <p><a href="{base_url}/">&larr; Back to Full Document Index</a></p>
+      <p><a href="{base_url}/">&larr; Back to Searchable Catalog</a> &bull; <a href="{base_url}/archive-index.html">Permanent Document Index</a></p>
       <p style="margin-top:0.5rem;">Archive managed for public research • Source: Parliament of South Australia</p>
     </footer>
   </div>
@@ -224,23 +261,149 @@ DOCUMENT_TEMPLATE = """<!DOCTYPE html>
 </html>
 """
 
-def generate_seo_assets(catalog_path: str = "public/data/catalog.json", output_dir: str = "public"):
-    if not os.path.exists(catalog_path):
-        sys.stderr.write(f"Error: {catalog_path} not found.\n")
+RESOLVER_TEMPLATE = """<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Opening: {escaped_title}</title>
+  <meta http-equiv="refresh" content="0; url={target_url}">
+  <link rel="canonical" href="{canonical_url}">
+  <script>
+    window.location.replace("{target_url_escaped}");
+  </script>
+  <style>
+    body {{
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0d1117;
+      color: #c9d1d9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+      padding: 1rem;
+    }}
+    .box {{
+      background: #161b22;
+      border: 1px solid #30363d;
+      padding: 2rem;
+      border-radius: 8px;
+      max-width: 500px;
+    }}
+    a {{ color: #58a6ff; text-decoration: none; font-weight: 600; }}
+    a:hover {{ text-decoration: underline; }}
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>Redirecting to Document...</h2>
+    <p style="margin: 1rem 0; color: #8b949e;">If your download does not begin automatically, please click below:</p>
+    <p><a href="{target_url}">⬇ Download {escaped_title}</a></p>
+    <p style="margin-top: 1.5rem; font-size: 0.85rem;"><a href="{canonical_url}">&larr; View Document Details & Metadata</a></p>
+  </div>
+</body>
+</html>
+"""
+
+ARCHIVE_INDEX_TEMPLATE = """<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Permanent Document Index - SA Parliament Public Works Committee Archive</title>
+  <meta name="description" content="Complete static directory listing of all public submissions and inquiries from the South Australia Public Works Committee. Optimized for archival crawlers and research.">
+  <link rel="canonical" href="{base_url}/archive-index.html">
+  <style>
+    body {{
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0d1117;
+      color: #c9d1d9;
+      line-height: 1.6;
+      padding: 2rem 1rem;
+    }}
+    .container {{ max-width: 1000px; margin: 0 auto; }}
+    h1 {{ color: #f0f6fc; margin-bottom: 0.5rem; }}
+    .subtitle {{ color: #8b949e; margin-bottom: 2rem; }}
+    table {{ width: 100%; border-collapse: collapse; margin-top: 1rem; background: #161b22; border: 1px solid #30363d; border-radius: 6px; overflow: hidden; }}
+    th, td {{ padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #30363d; font-size: 0.875rem; }}
+    th {{ background: #21262d; color: #f0f6fc; font-weight: 600; }}
+    tr:hover td {{ background: rgba(255,255,255,0.02); }}
+    a {{ color: #58a6ff; text-decoration: none; }}
+    a:hover {{ text-decoration: underline; }}
+    .badge {{ font-family: monospace; font-size: 0.8rem; background: rgba(255,255,255,0.05); padding: 0.15rem 0.4rem; border-radius: 3px; }}
+    footer {{ margin-top: 3rem; text-align: center; color: #8b949e; font-size: 0.85rem; border-top: 1px solid #30363d; padding-top: 1.5rem; }}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Permanent Document Archive Directory</h1>
+    <p class="subtitle">Complete crawlable listing of all {total_count} documents &bull; Optimized for Internet Archive (Wayback Machine) and researchers</p>
+    <p><a href="{base_url}/">&larr; Switch to Interactive Search & Filter Catalog</a></p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Category / Folder</th>
+          <th>Document Title</th>
+          <th>Format</th>
+          <th>Size</th>
+          <th>Live Source</th>
+          <th>Permanent Archive</th>
+        </tr>
+      </thead>
+      <tbody>
+        {table_rows}
+      </tbody>
+    </table>
+
+    <footer>
+      <p>South Australia Public Works Committee Archive &bull; <a href="{base_url}/">Home</a> &bull; <a href="{base_url}/sitemap.xml">XML Sitemap</a></p>
+    </footer>
+  </div>
+</body>
+</html>
+"""
+
+def generate_seo_assets(manifest_path: str = "data/manifest.json",
+                        catalog_path: str = "public/data/catalog.json",
+                        output_dir: str = "public"):
+    # Load document records preferring manifest (which has archive hash data) or catalog.json
+    docs_map = {}
+    if os.path.exists(manifest_path):
+        try:
+            with open(manifest_path, "r", encoding="utf-8") as f:
+                manifest_data = json.load(f)
+                docs_map = manifest_data.get("documents", {})
+        except Exception as e:
+            sys.stderr.write(f"Warning reading manifest: {e}\n")
+
+    if not docs_map and os.path.exists(catalog_path):
+        try:
+            with open(catalog_path, "r", encoding="utf-8") as f:
+                cat_data = json.load(f)
+                docs = cat_data.get("documents", [])
+                docs_map = {d["id"]: d for d in docs if "id" in d}
+        except Exception as e:
+            sys.stderr.write(f"Warning reading catalog: {e}\n")
+
+    if not docs_map:
+        sys.stderr.write(f"Error: No documents found to generate SEO and resolver assets.\n")
         return
 
-    with open(catalog_path, "r", encoding="utf-8") as f:
-        catalog = json.load(f)
-
-    docs = catalog.get("documents", [])
+    docs = list(docs_map.values())
     docs_dir = os.path.join(output_dir, "documents")
+    download_dir = os.path.join(output_dir, "download")
     os.makedirs(docs_dir, exist_ok=True)
+    os.makedirs(download_dir, exist_ok=True)
 
     sitemap_urls = [
-        {"loc": f"{BASE_URL}/", "lastmod": datetime.now(timezone.utc).strftime("%Y-%m-%d"), "priority": "1.0"}
+        {"loc": f"{BASE_URL}/", "lastmod": datetime.now(timezone.utc).strftime("%Y-%m-%d"), "priority": "1.0"},
+        {"loc": f"{BASE_URL}/archive-index.html", "lastmod": datetime.now(timezone.utc).strftime("%Y-%m-%d"), "priority": "0.9"}
     ]
 
-    sys.stderr.write(f"Generating static landing pages for {len(docs)} documents...\n")
+    sys.stderr.write(f"Generating landing pages and live resolvers for {len(docs)} documents...\n")
+    archive_rows = []
 
     for doc in docs:
         file_id = doc.get("id")
@@ -250,27 +413,48 @@ def generate_seo_assets(catalog_path: str = "public/data/catalog.json", output_d
         ext = doc.get("extension") or os.path.splitext(file_name)[1]
         size_bytes = doc.get("size_bytes", 0)
         size_str = format_bytes(size_bytes)
-        mod_date = doc.get("last_modified", "")[:10] or doc.get("discovered_at", "")[:10] or "Unknown"
+        mod_date = (doc.get("last_modified") or "")[:10]
+        download_url = doc.get("download_url") or doc.get("direct_api_url") or COMMITTEE_PORTAL
+
+        archive_meta = doc.get("archive", {})
+        release_url = archive_meta.get("release_url")
+        sha256_hash = archive_meta.get("sha256") or "Computed during GitHub Release sync"
 
         canonical_url = f"{BASE_URL}/documents/{file_id}.html"
-        page_title = f"{file_name} - South Australia Public Works Committee"
-        meta_desc = f"Public document '{file_name}' ({size_str}, {ext}) published by the South Australia Parliament Public Works Committee in category {folder}."
+        live_resolver_url = f"{BASE_URL}/download/{file_id}.html"
+
+        # Crawler enclosure hints
+        enclosures = []
+        if release_url:
+            enclosures.append(f'<link rel="enclosure" type="application/pdf" href="{release_url}">')
+        if download_url and "blob.core.windows.net" in download_url:
+            enclosures.append(f'<link rel="enclosure" type="application/pdf" href="{download_url}">')
+        crawler_enclosures = "\n  ".join(enclosures)
+
+        # Archive button
+        if release_url:
+            archive_button_html = f'<a class="btn-download-archive" href="{release_url}" target="_blank" rel="noopener noreferrer">📦 Permanent Archive (PDF)</a>'
+        else:
+            archive_button_html = f'<a class="btn-download-archive" href="{live_resolver_url}" target="_blank" rel="noopener noreferrer">📦 Permanent Live Link</a>'
+
+        page_title = f"{file_name} - SA Parliament Public Works Committee Archive"
+        meta_desc = f"Public document submission: {file_name} in category '{folder}'. South Australia Parliament Public Works Committee."
 
         schema = {
             "@context": "https://schema.org",
             "@type": "GovernmentPermit",
             "name": file_name,
             "description": meta_desc,
+            "dateModified": mod_date if mod_date else None,
             "url": canonical_url,
-            "dateModified": doc.get("last_modified") or datetime.now(timezone.utc).isoformat(),
-            "encodingFormat": "application/pdf" if ext.lower() == ".pdf" else "application/octet-stream",
             "publisher": {
                 "@type": "GovernmentOrganization",
-                "name": "Parliament of South Australia Public Works Committee",
-                "url": COMMITTEE_PORTAL
+                "name": "South Australia Public Works Committee",
+                "url": "https://committees.parliament.sa.gov.au"
             }
         }
 
+        # 1. Generate Static Landing Page
         html_content = DOCUMENT_TEMPLATE.format(
             page_title=html.escape(page_title),
             meta_description=html.escape(meta_desc),
@@ -282,9 +466,12 @@ def generate_seo_assets(catalog_path: str = "public/data/catalog.json", output_d
             folder_display=html.escape(folder),
             ext_display=html.escape(ext.upper().lstrip('.')),
             size_display=html.escape(size_str),
-            date_display=html.escape(mod_date),
+            date_display=html.escape(mod_date or "Unknown"),
+            sha256_display=html.escape(sha256_hash),
             file_id=file_id,
-            download_url=doc.get("download_url") or doc.get("direct_api_url") or COMMITTEE_PORTAL,
+            live_resolver_url=live_resolver_url,
+            archive_button_html=archive_button_html,
+            crawler_enclosures=crawler_enclosures,
             committee_portal=COMMITTEE_PORTAL
         )
 
@@ -292,13 +479,53 @@ def generate_seo_assets(catalog_path: str = "public/data/catalog.json", output_d
         with open(doc_html_path, "w", encoding="utf-8") as f:
             f.write(html_content)
 
+        # 2. Generate Solution A Live Resolver Page (/download/{id}.html)
+        target_live_url = download_url
+        resolver_content = RESOLVER_TEMPLATE.format(
+            escaped_title=html.escape(file_name),
+            target_url=html.escape(target_live_url),
+            target_url_escaped=target_live_url.replace('"', '\\"'),
+            canonical_url=canonical_url
+        )
+        resolver_path = os.path.join(download_dir, f"{file_id}.html")
+        with open(resolver_path, "w", encoding="utf-8") as f:
+            f.write(resolver_content)
+
+        # 3. Add row for Archive Directory
+        perm_archive_link = f'<a href="{release_url}">Download PDF</a>' if release_url else '-'
+        archive_rows.append(
+            f"<tr>"
+            f"<td><code>{html.escape(folder)}</code></td>"
+            f"<td><a href='documents/{file_id}.html'><strong>{html.escape(file_name)}</strong></a></td>"
+            f"<td><span class='badge'>{html.escape(ext)}</span></td>"
+            f"<td>{html.escape(size_str)}</td>"
+            f"<td><a href='download/{file_id}.html'>Live Resolver</a></td>"
+            f"<td>{perm_archive_link}</td>"
+            f"</tr>"
+        )
+
         sitemap_urls.append({
             "loc": canonical_url,
             "lastmod": mod_date if len(mod_date) == 10 else datetime.now(timezone.utc).strftime("%Y-%m-%d"),
             "priority": "0.8"
         })
+        sitemap_urls.append({
+            "loc": live_resolver_url,
+            "lastmod": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            "priority": "0.7"
+        })
 
-    # Generate sitemap.xml
+    # 4. Generate Archive Index Page (archive-index.html)
+    archive_index_content = ARCHIVE_INDEX_TEMPLATE.format(
+        base_url=BASE_URL,
+        total_count=len(docs),
+        table_rows="\n        ".join(archive_rows)
+    )
+    with open(os.path.join(output_dir, "archive-index.html"), "w", encoding="utf-8") as f:
+        f.write(archive_index_content)
+    sys.stderr.write(f"Saved crawlable archive index to {os.path.join(output_dir, 'archive-index.html')}\n")
+
+    # 5. Generate sitemap.xml
     sitemap_lines = [
         '<?xml version="1.0" encoding="UTF-8"?>',
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
@@ -316,8 +543,14 @@ def generate_seo_assets(catalog_path: str = "public/data/catalog.json", output_d
         f.write("\n".join(sitemap_lines) + "\n")
     sys.stderr.write(f"Saved sitemap with {len(sitemap_urls)} entries to {sitemap_path}\n")
 
-    # Generate robots.txt
+    # 6. Generate robots.txt
     robots_content = f"""User-agent: *
+Allow: /
+
+User-agent: ia_archiver
+Allow: /
+
+User-agent: archive.org_bot
 Allow: /
 
 Sitemap: {BASE_URL}/sitemap.xml
