@@ -80,34 +80,34 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-  wayback-archive:
-    name: Background Wayback Archiving
-    needs: scrape-and-deploy
-    runs-on: ubuntu-latest
-    if: always() && needs.scrape-and-deploy.result == 'success'
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
+  # wayback-archive:
+  #   name: Background Wayback Archiving
+  #   needs: scrape-and-deploy
+  #   runs-on: ubuntu-latest
+  #   if: always() && needs.scrape-and-deploy.result == 'success'
+  #   steps:
+  #     - name: Check out repository
+  #       uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: '3.11'
 
-      - name: Restore Manifest Cache
-        uses: actions/cache@v4
-        with:
-          path: data/manifest.json
-          key: manifest-${{ github.run_id }}
-          restore-keys: |
-            manifest-
+  #     - name: Restore Manifest Cache
+  #       uses: actions/cache@v4
+  #       with:
+  #         path: data/manifest.json
+  #         key: manifest-${{ github.run_id }}
+  #         restore-keys: |
+  #           manifest-
 
-      - name: Archive Batch to Wayback Machine
-        continue-on-error: true
-        run: |
-          BATCH_SIZE="${{ github.event.inputs.wayback_batch || '40' }}"
-          python wayback_archive.py \
-            --manifest data/manifest.json \
-            --changelog public/data/changelog.json \
-            --batch-size "$BATCH_SIZE" \
-            --delay 8.0
+  #     - name: Archive Batch to Wayback Machine
+  #       continue-on-error: true
+  #       run: |
+  #         BATCH_SIZE="${{ github.event.inputs.wayback_batch || '40' }}"
+  #         python wayback_archive.py \
+  #           --manifest data/manifest.json \
+  #           --changelog public/data/changelog.json \
+  #           --batch-size "$BATCH_SIZE" \
+  #           --delay 8.0
