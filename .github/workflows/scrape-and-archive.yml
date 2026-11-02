@@ -10,6 +10,10 @@ on:
         description: 'Limit files to scrape (0 for unlimited)'
         required: false
         default: '0'
+      wayback_batch:
+        description: 'Max URLs to archive to Wayback in this run'
+        required: false
+        default: '40'
 
 permissions:
   contents: write
@@ -22,6 +26,7 @@ concurrency:
 
 jobs:
   scrape-and-deploy:
+    name: Scrape & Deploy Catalog
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -75,9 +80,34 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-      - name: Ping Wayback Machine for Archival
+  wayback-archive:
+    name: Background Wayback Archiving
+    needs: scrape-and-deploy
+    runs-on: ubuntu-latest
+    if: always() && needs.scrape-and-deploy.result == 'success'
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Restore Manifest Cache
+        uses: actions/cache@v4
+        with:
+          path: data/manifest.json
+          key: manifest-${{ github.run_id }}
+          restore-keys: |
+            manifest-
+
+      - name: Archive Batch to Wayback Machine
         continue-on-error: true
         run: |
-          echo "Pinging Wayback Machine Save Page Now for root catalog and archive directory..."
-          curl -s -m 15 -I "https://web.archive.org/save/https://southausarchive.github.io/public-works-committee/" || true
-          curl -s -m 15 -I "https://web.archive.org/save/https://southausarchive.github.io/public-works-committee/archive-index.html" || true
+          BATCH_SIZE="${{ github.event.inputs.wayback_batch || '40' }}"
+          python wayback_archive.py \
+            --manifest data/manifest.json \
+            --changelog public/data/changelog.json \
+            --batch-size "$BATCH_SIZE" \
+            --delay 8.0
