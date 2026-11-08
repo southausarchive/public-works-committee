@@ -56,14 +56,6 @@ jobs:
             --catalog-json public/data/catalog.json \
             --catalog-md CATALOG.md
 
-      - name: Sync Permanent Archive to GitHub Releases
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-        run: |
-          LIMIT_ARG="${{ github.event.inputs.limit || '0' }}"
-          python release_archive.py "$LIMIT_ARG"
-
       - name: Generate SEO Landing Pages, Live Resolvers, Sitemap & Archive Index
         run: |
           python generate_seo.py

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Release Archive Sync Engine for SA Parliament Public Works Committee Archive.
-- Archives document files to GitHub Releases under tag 'document-archive'.
+- Archives document files to GitHub Releases under tag 'document-archive' (splitting across multiple releases if asset count >= 900).
 - Single-Copy Guarantee: Computes SHA-256 hashes to prevent redundant downloads/uploads.
 - Version Tracking: If a file is modified at source, uploads a versioned copy (_v2, _v3).
 - No Deletions: Files removed from source remain preserved in GitHub Releases.
@@ -19,8 +19,6 @@ import subprocess
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 
-RELEASE_TAG = "document-archive"
-RELEASE_TITLE = "Parliamentary Public Works Committee Document Archive"
 CHANGELOG_PATH = "CHANGELOG.md"
 CHANGELOG_JSON_PATH = "public/data/changelog.json"
 
@@ -35,30 +33,82 @@ def calculate_sha256(filepath: str) -> str:
             h.update(chunk)
     return h.hexdigest()
 
-def ensure_github_release_exists(repo_slug: Optional[str] = None):
-    """Ensure the GitHub Release tag exists using gh CLI."""
-    check_cmd = ["gh", "release", "view", RELEASE_TAG]
+def get_release_status_list(repo_slug: Optional[str] = None) -> List[Dict[str, Any]]:
+    cmd = ["gh", "release", "list", "--json", "tagName,assets", "--limit", "100"]
+    if repo_slug:
+        cmd.extend(["--repo", repo_slug])
+
+    res = subprocess.run(cmd, capture_output=True, text=True)
+    if res.returncode != 0:
+        return []
+    try:
+        releases = json.loads(res.stdout)
+        valid = []
+        for r in releases:
+            tag = r.get("tagName", "")
+            if tag == "document-archive" or tag.startswith("document-archive-"):
+                valid.append(r)
+        
+        def release_sort_key(rel):
+            tag = rel["tagName"]
+            if tag == "document-archive":
+                return 1
+            parts = tag.split("-")
+            try:
+                return int(parts[-1])
+            except ValueError:
+                return 999
+        valid.sort(key=release_sort_key)
+        return valid
+    except Exception:
+        return []
+
+def get_active_release_tag(repo_slug: Optional[str] = None, max_assets_per_release: int = 900) -> str:
+    releases = get_release_status_list(repo_slug)
+    if not releases:
+        return "document-archive"
+    
+    latest = releases[-1]
+    assets = latest.get("assets", [])
+    if len(assets) < max_assets_per_release:
+        return latest["tagName"]
+    else:
+        if latest["tagName"] == "document-archive":
+            next_tag = "document-archive-2"
+        else:
+            parts = latest["tagName"].split("-")
+            try:
+                next_num = int(parts[-1]) + 1
+                next_tag = f"document-archive-{next_num}"
+            except ValueError:
+                next_tag = f"document-archive-{len(releases) + 1}"
+        return next_tag
+
+def ensure_release_exists(tag: str, repo_slug: Optional[str] = None):
+    check_cmd = ["gh", "release", "view", tag]
     if repo_slug:
         check_cmd.extend(["--repo", repo_slug])
 
     res = subprocess.run(check_cmd, capture_output=True, text=True)
     if res.returncode != 0:
-        sys.stderr.write(f"Creating GitHub Release '{RELEASE_TAG}'...\n")
+        sys.stderr.write(f"Creating GitHub Release '{tag}'...\n")
+        title = f"Parliamentary Public Works Committee Document Archive ({tag})"
         create_cmd = [
-            "gh", "release", "create", RELEASE_TAG,
-            "--title", RELEASE_TITLE,
-            "--notes", "Permanent immutable archive of South Australia Public Works Committee documents.",
+            "gh", "release", "create", tag,
+            "--title", title,
+            "--notes", f"Permanent immutable archive of South Australia Public Works Committee documents (Release: {tag}).",
         ]
         if repo_slug:
             create_cmd.extend(["--repo", repo_slug])
         create_res = subprocess.run(create_cmd, capture_output=True, text=True)
         if create_res.returncode != 0:
-            sys.stderr.write(f"Warning: Failed to create release via gh: {create_res.stderr}\n")
+            sys.stderr.write(f"Warning: Failed to create release {tag} via gh: {create_res.stderr}\n")
 
-def upload_release_asset(filepath: str, asset_name: str, repo_slug: Optional[str] = None) -> bool:
-    """Upload asset to GitHub Release using gh CLI."""
+def upload_release_asset(tag: str, filepath: str, asset_name: str, repo_slug: Optional[str] = None) -> bool:
+    """Upload asset to specific GitHub Release tag using gh CLI."""
+    ensure_release_exists(tag, repo_slug)
     cmd = [
-        "gh", "release", "upload", RELEASE_TAG,
+        "gh", "release", "upload", tag,
         f"{filepath}#{asset_name}",
         "--clobber"
     ]
@@ -68,7 +118,7 @@ def upload_release_asset(filepath: str, asset_name: str, repo_slug: Optional[str
     res = subprocess.run(cmd, capture_output=True, text=True)
     if res.returncode == 0:
         return True
-    sys.stderr.write(f"Failed to upload {asset_name} to release: {res.stderr}\n")
+    sys.stderr.write(f"Failed to upload {asset_name} to release {tag}: {res.stderr}\n")
     return False
 
 def sync_release_archive(manifest_path: str = "data/manifest.json",
@@ -84,9 +134,6 @@ def sync_release_archive(manifest_path: str = "data/manifest.json",
 
     if not repo_slug:
         repo_slug = os.environ.get("GITHUB_REPOSITORY", "southausarchive/public-works-committee")
-
-    if not dry_run and os.environ.get("GITHUB_ACTIONS") == "true":
-        ensure_github_release_exists(repo_slug)
 
     documents = manifest.get("documents", {})
     stats = {"processed": 0, "added": 0, "updated": 0, "unchanged": 0, "events": []}
@@ -137,21 +184,24 @@ def sync_release_archive(manifest_path: str = "data/manifest.json",
 
             # File is either new or content hash changed
             if not existing_hash:
-                # Brand new file
                 version = 1
                 asset_name = f"{file_id}{ext}"
                 event_type = "ADDED"
             else:
-                # Hash changed -> Content was updated at source!
                 version = current_version + 1
                 asset_name = f"{file_id}_v{version}{ext}"
                 event_type = "UPDATED"
 
-            release_asset_url = f"https://github.com/{repo_slug}/releases/download/{RELEASE_TAG}/{asset_name}"
+            # Determine active release tag (handles splitting across releases when >= 900 assets)
+            active_tag = "document-archive"
+            if not dry_run and os.environ.get("GITHUB_ACTIONS") == "true":
+                active_tag = get_active_release_tag(repo_slug)
+
+            release_asset_url = f"https://github.com/{repo_slug}/releases/download/{active_tag}/{asset_name}"
 
             upload_success = True
             if not dry_run:
-                upload_success = upload_release_asset(tmp_file_path, asset_name, repo_slug=repo_slug)
+                upload_success = upload_release_asset(active_tag, tmp_file_path, asset_name, repo_slug=repo_slug)
 
             try:
                 os.remove(tmp_file_path)
@@ -161,7 +211,7 @@ def sync_release_archive(manifest_path: str = "data/manifest.json",
             if upload_success:
                 doc["archive"] = {
                     "sha256": new_hash,
-                    "release_tag": RELEASE_TAG,
+                    "release_tag": active_tag,
                     "asset_name": asset_name,
                     "release_url": release_asset_url,
                     "archived_at": current_time_iso,
@@ -197,7 +247,6 @@ def sync_release_archive(manifest_path: str = "data/manifest.json",
     return stats
 
 def write_changelog(events: List[Dict[str, Any]], date_str: str):
-    # 1. Update public/data/changelog.json
     os.makedirs(os.path.dirname(os.path.abspath(CHANGELOG_JSON_PATH)), exist_ok=True)
     existing_json = []
     if os.path.exists(CHANGELOG_JSON_PATH):
@@ -211,7 +260,6 @@ def write_changelog(events: List[Dict[str, Any]], date_str: str):
     with open(CHANGELOG_JSON_PATH, "w", encoding="utf-8") as f:
         json.dump(all_json, f, indent=2)
 
-    # 2. Prepend to CHANGELOG.md
     md_header = "# Public Works Committee Document Archive Changelog\n\n"
     existing_md = ""
     if os.path.exists(CHANGELOG_PATH):
