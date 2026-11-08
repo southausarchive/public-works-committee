@@ -19,6 +19,11 @@ import urllib.parse
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List
 
+import signal
+signal.signal(signal.SIGTERM, lambda s, f: sys.exit(0))
+signal.signal(signal.SIGINT, lambda s, f: sys.exit(0))
+
+
 API_BASE = "https://committees-api.parliament.sa.gov.au/api"
 COMMITTEE_PAGE_URL = "https://committees.parliament.sa.gov.au/committee/451/Public%20Works%20Committee/56/56th%20Parliament%2005%2F05%2F2026%20-%20Current/56"
 

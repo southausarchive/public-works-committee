@@ -18,6 +18,11 @@ import urllib.error
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 
+import signal
+signal.signal(signal.SIGTERM, lambda s, f: sys.exit(0))
+signal.signal(signal.SIGINT, lambda s, f: sys.exit(0))
+
+
 SPN_ENDPOINT = "https://web.archive.org/save/"
 BASE_URL = "https://southausarchive.github.io/public-works-committee"
 

@@ -13,7 +13,13 @@ on:
         default: '0'
 
 permissions:
+
+concurrency:
+  group: 'workflow-${{ github.workflow }}-${{ github.ref }}'
+  cancel-in-progress: true
+
   contents: write
+  issues: write
 
 jobs:
   archive-releases:
@@ -44,3 +50,45 @@ jobs:
           git add data/manifest.json CHANGELOG.md public/data/changelog.json || true
           git diff --staged --quiet || git commit -m "chore: update archive manifest and changelog [skip ci]"
           git push || true
+
+      - name: Report Success Summary
+        if: success()
+        run: |
+          echo "### ✅ Release Archive Sync Succeeded" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow:** ${{ github.workflow }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Run ID:** ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp:** $(date -u)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Report Failure & Open Alert Issue
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const repo = context.repo;
+            const runUrl = `https://github.com/${repo.owner}/${repo.repo}/actions/runs/${context.runId}`;
+            const title = `🚨 Workflow Failure: Archive Documents to GitHub Releases failed`;
+            const body = `Automated GitHub Release archiving run failed.\n\n- **Workflow:** ${context.workflow}\n- **Run ID:** ${context.runId}\n- **Run URL:** ${runUrl}\n- **Commit:** ${context.sha}\n\nPlease check the workflow logs for details and stack traces.`;
+            
+            const issues = await github.rest.issues.listForRepo({
+              owner: repo.owner,
+              repo: repo.repo,
+              state: 'open',
+              labels: ['workflow-alert']
+            });
+            
+            if (issues.data.length > 0) {
+              await github.rest.issues.createComment({
+                owner: repo.owner,
+                repo: repo.repo,
+                issue_number: issues.data[0].number,
+                body: `New failure in run ${runUrl}:\n\n${body}`
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: repo.owner,
+                repo: repo.repo,
+                title: title,
+                body: body,
+                labels: ['workflow-alert', 'bug']
+              });
+            }

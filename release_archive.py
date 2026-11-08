@@ -19,6 +19,11 @@ import subprocess
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 
+import signal
+signal.signal(signal.SIGTERM, lambda s, f: sys.exit(0))
+signal.signal(signal.SIGINT, lambda s, f: sys.exit(0))
+
+
 CHANGELOG_PATH = "CHANGELOG.md"
 CHANGELOG_JSON_PATH = "public/data/changelog.json"
 

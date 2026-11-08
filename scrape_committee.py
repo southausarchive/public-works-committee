@@ -14,6 +14,11 @@ import urllib.request
 import urllib.parse
 from typing import Optional, Dict, Any, List
 
+import signal
+signal.signal(signal.SIGTERM, lambda s, f: sys.exit(0))
+signal.signal(signal.SIGINT, lambda s, f: sys.exit(0))
+
+
 API_BASE = "https://committees-api.parliament.sa.gov.au/api"
 
 DEFAULT_HEADERS = {

@@ -17,6 +17,11 @@ import html
 from datetime import datetime, timezone
 from typing import Dict, Any, List
 
+import signal
+signal.signal(signal.SIGTERM, lambda s, f: sys.exit(0))
+signal.signal(signal.SIGINT, lambda s, f: sys.exit(0))
+
+
 BASE_URL = "https://southausarchive.github.io/public-works-committee"
 COMMITTEE_PORTAL = "https://committees.parliament.sa.gov.au/committee/451/Public%20Works%20Committee/56/56th%20Parliament%2005%2F05%2F2026%20-%20Current/56"
 COMMITTEE_ID = 451
