@@ -3,7 +3,7 @@ name: Scrape Committee & Deploy Catalog
 on:
   schedule:
     # Run at midnight every day
-    - cron: '0 0 * * *'
+    - cron: '0 14 * * *'
   workflow_dispatch:
     inputs:
       limit:
