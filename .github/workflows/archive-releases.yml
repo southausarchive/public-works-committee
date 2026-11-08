@@ -1,0 +1,46 @@
+name: Archive Documents to GitHub Releases
+
+on:
+  workflow_run:
+    workflows: ["Scrape Committee & Deploy Catalog"]
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Limit files to archive (0 for unlimited)'
+        required: false
+        default: '0'
+
+permissions:
+  contents: write
+
+jobs:
+  archive-releases:
+    name: Sync Permanent Archive to GitHub Releases
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Sync Permanent Archive to GitHub Releases
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          LIMIT_ARG="${{ github.event.inputs.limit || '0' }}"
+          python release_archive.py "$LIMIT_ARG"
+
+      - name: Commit manifest & changelog updates
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/manifest.json CHANGELOG.md public/data/changelog.json || true
+          git diff --staged --quiet || git commit -m "chore: update archive manifest and changelog [skip ci]"
+          git push || true
