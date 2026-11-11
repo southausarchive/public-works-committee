@@ -543,13 +543,17 @@
       background-color: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 1.5rem;
+      padding: 1.25rem;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
     .tree-toolbar {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
       margin-bottom: 1rem;
       padding-bottom: 0.75rem;
       border-bottom: 1px solid var(--border);
@@ -559,11 +563,15 @@
       font-size: 0.95rem;
       font-weight: 600;
       color: var(--heading);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
     }
 
     .tree-toolbar-actions {
       display: flex;
       gap: 0.5rem;
+      flex-wrap: wrap;
     }
 
     .tree-root {
@@ -572,7 +580,7 @@
     }
 
     .tree-node {
-      margin-left: 1.25rem;
+      margin-left: 1rem;
       position: relative;
     }
 
@@ -583,9 +591,9 @@
     .tree-node::before {
       content: '';
       position: absolute;
-      top: 0.85rem;
-      left: -0.85rem;
-      width: 0.65rem;
+      top: 1rem;
+      left: -0.65rem;
+      width: 0.5rem;
       border-top: 1px solid var(--border);
     }
 
@@ -596,9 +604,10 @@
     .tree-node-content {
       display: flex;
       align-items: center;
-      padding: 0.35rem 0.5rem;
-      border-radius: 5px;
+      padding: 0.45rem 0.5rem;
+      border-radius: 6px;
       gap: 0.5rem;
+      min-height: 40px;
       transition: background 0.15s;
     }
 
@@ -606,9 +615,21 @@
       background-color: var(--hover-bg);
     }
 
+    .tree-folder-row {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .tree-file-row {
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 0.4rem 0.75rem;
+    }
+
     .tree-expander {
-      width: 1.25rem;
-      height: 1.25rem;
+      width: 32px;
+      height: 32px;
+      min-width: 32px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -616,12 +637,17 @@
       color: var(--text-muted);
       user-select: none;
       font-size: 0.75rem;
-      border-radius: 3px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
     }
 
-    .tree-expander:hover {
+    .tree-expander:hover,
+    .tree-expander:focus-visible {
       background: var(--border);
       color: var(--heading);
+      border-color: var(--primary);
     }
 
     .tree-folder-title {
@@ -631,6 +657,8 @@
       display: inline-flex;
       align-items: center;
       gap: 0.4rem;
+      word-break: break-word;
+      line-height: 1.35;
     }
 
     .tree-count-badge {
@@ -638,20 +666,43 @@
       background: var(--badge-bg);
       border: 1px solid var(--border);
       color: var(--text-muted);
-      padding: 0.1rem 0.4rem;
+      padding: 0.15rem 0.5rem;
       border-radius: 10px;
+      white-space: nowrap;
+      margin-left: auto;
+    }
+
+    .tree-file-main {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.4rem;
+      flex: 1 1 240px;
+      min-width: 0;
+      line-height: 1.35;
+    }
+
+    .tree-file-icon {
+      flex-shrink: 0;
+      margin-top: 0.1rem;
     }
 
     .tree-file-title {
       color: var(--text-main);
+      display: inline;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+
+    .tree-file-meta {
       display: inline-flex;
       align-items: center;
-      gap: 0.4rem;
-      word-break: break-word;
+      gap: 0.5rem;
+      flex-shrink: 0;
+      margin-left: auto;
     }
 
     .tree-children {
-      margin-left: 0.5rem;
+      margin-left: 0.4rem;
       border-left: 1px solid var(--border);
     }
 
@@ -674,8 +725,9 @@
       background: rgba(248, 81, 73, 0.15);
       color: #f85149;
       border: 1px solid rgba(248, 81, 73, 0.4);
-      margin-left: 0.4rem;
+      margin-left: 0.35rem;
       vertical-align: middle;
+      white-space: nowrap;
     }
 
     .badge-version {
@@ -687,8 +739,104 @@
       background: rgba(56, 139, 253, 0.15);
       color: #58a6ff;
       border: 1px solid rgba(56, 139, 253, 0.4);
-      margin-left: 0.4rem;
+      margin-left: 0.35rem;
       vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    /* Mobile Responsive Optimizations for Tree View & Page */
+    @media (max-width: 768px) {
+      .container {
+        padding: 0.75rem 0.5rem;
+      }
+
+      .tree-card {
+        padding: 0.85rem 0.65rem;
+        border-radius: 6px;
+      }
+
+      .tree-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .tree-toolbar-actions {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+      }
+
+      .tree-toolbar-actions .btn {
+        justify-content: center;
+        padding: 0.55rem;
+        font-size: 0.82rem;
+      }
+
+      .tree-node {
+        margin-left: 0.55rem;
+      }
+
+      .tree-children {
+        margin-left: 0.2rem;
+      }
+
+      .tree-node-content {
+        padding: 0.4rem 0.3rem;
+        min-height: 42px;
+        gap: 0.35rem;
+      }
+
+      .tree-expander {
+        width: 34px;
+        height: 34px;
+        min-width: 34px;
+        font-size: 0.85rem;
+      }
+
+      .tree-folder-title {
+        font-size: 0.88rem;
+      }
+
+      .tree-count-badge {
+        font-size: 0.7rem;
+        padding: 0.1rem 0.35rem;
+      }
+
+      .tree-file-row {
+        flex-direction: column;
+        align-items: stretch;
+        background: rgba(255, 255, 255, 0.015);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        margin: 0.2rem 0;
+        padding: 0.5rem;
+        border-radius: 6px;
+      }
+
+      .tree-file-main {
+        flex: 1 1 100%;
+        width: 100%;
+        font-size: 0.88rem;
+      }
+
+      .tree-file-meta {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 0.4rem;
+        padding-top: 0.35rem;
+        border-top: 1px dashed rgba(255, 255, 255, 0.06);
+        justify-content: space-between;
+      }
+
+      .tree-file-meta .size-col {
+        font-size: 0.78rem;
+      }
+
+      .tree-file-meta .btn-download {
+        padding: 0.35rem 0.65rem;
+        font-size: 0.8rem;
+        min-height: 32px;
+      }
     }
 
     /* Pagination Bar */
@@ -1508,10 +1656,11 @@
       let html = `<div class="tree-node ${isRoot ? "root-level" : ""}">`;
 
       const isCollapsed = !isRoot;
+      const folderEscaped = escapeHtml(node.name);
       html += `
-        <div class="tree-node-content">
-          ${hasChildren ? `<span class="tree-expander" onclick="toggleTreeNode(this)">${isCollapsed ? "▶" : "▼"}</span>` : `<span class="tree-expander"></span>`}
-          <span class="tree-folder-title" onclick="toggleTreeNode(this)">📁 ${escapeHtml(node.name)}</span>
+        <div class="tree-node-content tree-folder-row" onclick="toggleTreeNode(this)" role="button" tabindex="0" aria-expanded="${!isCollapsed}" aria-label="Folder ${folderEscaped}, ${totalDocsInFolder} files">
+          ${hasChildren ? `<button type="button" class="tree-expander" onclick="event.stopPropagation(); toggleTreeNode(this.parentElement)" aria-label="Toggle ${folderEscaped}">${isCollapsed ? "▶" : "▼"}</button>` : `<span class="tree-expander" style="visibility:hidden;"></span>`}
+          <span class="tree-folder-title">📁 ${folderEscaped}</span>
           <span class="tree-count-badge">${totalDocsInFolder} ${totalDocsInFolder === 1 ? "file" : "files"}</span>
         </div>
       `;
@@ -1527,18 +1676,27 @@
           node.files
             .sort((a, b) => a.name.localeCompare(b.name))
             .forEach((file) => {
+              const isRemoved = file.status === 'removed';
+              const ver = (file.archive && file.archive.version) ? file.archive.version : 1;
+              const statusBadge = isRemoved ? `<span class="badge-removed">🚫 Removed</span>` : '';
+              const verBadge = ver > 1 ? `<span class="badge-version">🔄 v${ver}</span>` : '';
+              const fileEscaped = escapeHtml(file.name);
+              const downloadUrl = file.download_url || file.direct_api_url;
+
               html += `
                 <div class="tree-node">
-                  <div class="tree-node-content">
-                    <span class="tree-expander"></span>
-                    <span class="tree-file-title">
-                      📄 <a href="documents/${file.id}.html" style="color:var(--text-main);text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${escapeHtml(file.name)}</a>
-                      ${file.status === 'removed' ? '<span class="badge-removed">🚫 Removed</span>' : ''}
-                      ${(file.archive && file.archive.version > 1) ? `<span class="badge-version">🔄 v${file.archive.version}</span>` : ''}
-                    </span>
-                    <span class="size-col">(${formatBytes(file.size_bytes)})</span>
-                    <div style="margin-left:auto;">
-                      <a class="btn-download" style="padding:0.2rem 0.5rem;font-size:0.75rem;text-decoration:none;display:inline-block;" href="${file.download_url || file.direct_api_url}" target="_blank" rel="noopener noreferrer">⬇ Download</a>
+                  <div class="tree-node-content tree-file-row">
+                    <div class="tree-file-main">
+                      <span class="tree-file-icon">📄</span>
+                      <span class="tree-file-title">
+                        <a href="documents/${file.id}.html" style="color:var(--text-main);text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${fileEscaped}</a>
+                        ${statusBadge}
+                        ${verBadge}
+                      </span>
+                    </div>
+                    <div class="tree-file-meta">
+                      <span class="size-col">(${formatBytes(file.size_bytes)})</span>
+                      <a class="btn-download" style="padding:0.25rem 0.65rem;font-size:0.75rem;text-decoration:none;display:inline-flex;" href="${downloadUrl}" target="_blank" rel="noopener noreferrer">⬇ Download</a>
                     </div>
                   </div>
                 </div>
@@ -1564,17 +1722,21 @@
     }
 
     function toggleTreeNode(element) {
-      const nodeContent = element.closest(".tree-node-content");
+      const nodeContent = element.classList.contains("tree-node-content") ? element : element.closest(".tree-node-content");
+      if (!nodeContent) return;
       const expander = nodeContent.querySelector(".tree-expander");
       const childrenContainer = nodeContent.nextElementSibling;
       if (!childrenContainer) return;
 
-      if (childrenContainer.classList.contains("collapsed")) {
+      const willExpand = childrenContainer.classList.contains("collapsed");
+      if (willExpand) {
         childrenContainer.classList.remove("collapsed");
         if (expander) expander.textContent = "▼";
+        nodeContent.setAttribute("aria-expanded", "true");
       } else {
         childrenContainer.classList.add("collapsed");
         if (expander) expander.textContent = "▶";
+        nodeContent.setAttribute("aria-expanded", "false");
       }
     }
 
@@ -1705,6 +1867,9 @@
       document.querySelectorAll(".tree-expander").forEach((el) => {
         if (el.textContent.trim()) el.textContent = "▼";
       });
+      document.querySelectorAll(".tree-folder-row").forEach((el) => {
+        el.setAttribute("aria-expanded", "true");
+      });
     });
 
     document.getElementById("btnCollapseAll").addEventListener("click", () => {
@@ -1712,6 +1877,17 @@
       document.querySelectorAll(".tree-expander").forEach((el) => {
         if (el.textContent.trim()) el.textContent = "▶";
       });
+      document.querySelectorAll(".tree-folder-row").forEach((el) => {
+        el.setAttribute("aria-expanded", "false");
+      });
+    });
+
+    // Keyboard support for tree folder navigation (Enter / Space)
+    document.getElementById("treeContent").addEventListener("keydown", (e) => {
+      if ((e.key === "Enter" || e.key === " ") && e.target.classList.contains("tree-folder-row")) {
+        e.preventDefault();
+        toggleTreeNode(e.target);
+      }
     });
 
     loadCatalog();
