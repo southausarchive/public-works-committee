@@ -22,8 +22,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  scrape-and-deploy:
-    name: Scrape & Deploy Catalog
+  scrape-and-build:
+    name: Scrape & Build Catalog
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -66,10 +66,6 @@ jobs:
         with:
           path: './public'
 
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-
       - name: Save Manifest Cache
         uses: actions/cache/save@v4
         if: always()
@@ -77,23 +73,15 @@ jobs:
           path: data/manifest.json
           key: manifest-${{ github.run_id }}
 
-      - name: Report Success Summary
-        if: success()
-        run: |
-          echo "### ✅ Scrape & Deploy Succeeded" >> $GITHUB_STEP_SUMMARY
-          echo "- **Workflow:** ${{ github.workflow }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Run ID:** ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Timestamp:** $(date -u)" >> $GITHUB_STEP_SUMMARY
-
-      - name: Report Failure & Open Alert Issue
+      - name: Report Build Failure & Open Alert Issue
         if: failure()
         uses: actions/github-script@v6
         with:
           script: |
             const repo = context.repo;
             const runUrl = `https://github.com/${repo.owner}/${repo.repo}/actions/runs/${context.runId}`;
-            const title = `🚨 Workflow Failure: Scrape & Deploy Catalog failed`;
-            const body = `Automated GitHub Actions run failed during scraping or deployment.\n\n- **Workflow:** ${context.workflow}\n- **Run ID:** ${context.runId}\n- **Run URL:** ${runUrl}\n- **Commit:** ${context.sha}\n\nPlease check the workflow logs for details and stack traces.`;
+            const title = `🚨 Workflow Failure: Scrape & Build Catalog failed`;
+            const body = `Automated GitHub Actions run failed during scraping or catalog building.\n\n- **Workflow:** ${context.workflow}\n- **Run ID:** ${context.runId}\n- **Run URL:** ${runUrl}\n- **Commit:** ${context.sha}\n\nPlease check the workflow logs for details and stack traces.`;
             
             const issues = await github.rest.issues.listForRepo({
               owner: repo.owner,
@@ -119,9 +107,33 @@ jobs:
               });
             }
 
+  deploy-pages:
+    name: Deploy to GitHub Pages
+    needs: scrape-and-build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Report Success Summary
+        if: success()
+        run: |
+          echo "### ✅ Scrape & Deploy Succeeded" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow:** ${{ github.workflow }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Run ID:** ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Pages URL:** ${{ steps.deployment.outputs.page_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp:** $(date -u)" >> $GITHUB_STEP_SUMMARY
+
   archive-to-releases:
     name: Archive Documents to GitHub Releases
-    needs: scrape-and-deploy
+    needs: scrape-and-build
     runs-on: ubuntu-latest
     if: success()
     permissions:
