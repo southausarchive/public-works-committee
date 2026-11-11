@@ -68,26 +68,51 @@ def get_release_status_list(repo_slug: Optional[str] = None) -> List[Dict[str, A
     except Exception:
         return []
 
-def get_active_release_tag(repo_slug: Optional[str] = None, max_assets_per_release: int = 900) -> str:
-    releases = get_release_status_list(repo_slug)
-    if not releases:
-        return "document-archive"
-    
-    latest = releases[-1]
-    assets = latest.get("assets", [])
-    if len(assets) < max_assets_per_release:
-        return latest["tagName"]
-    else:
-        if latest["tagName"] == "document-archive":
-            next_tag = "document-archive-2"
+class ReleaseManager:
+    def __init__(self, repo_slug: Optional[str] = None, max_assets: int = 900):
+        self.repo_slug = repo_slug
+        self.max_assets = max_assets
+        self.asset_counts: Dict[str, int] = {}
+        self._init_releases()
+
+    def _init_releases(self):
+        releases = get_release_status_list(self.repo_slug)
+        if not releases:
+            self.active_tag = "document-archive-1"
+            self.asset_counts[self.active_tag] = 0
+            return
+
+        for r in releases:
+            tag = r.get("tagName", "")
+            cnt = len(r.get("assets", []))
+            self.asset_counts[tag] = cnt
+
+        latest = releases[-1]
+        latest_tag = latest.get("tagName", "document-archive-1")
+        if self.asset_counts.get(latest_tag, 0) < self.max_assets:
+            self.active_tag = latest_tag
         else:
-            parts = latest["tagName"].split("-")
-            try:
-                next_num = int(parts[-1]) + 1
-                next_tag = f"document-archive-{next_num}"
-            except ValueError:
-                next_tag = f"document-archive-{len(releases) + 1}"
-        return next_tag
+            self.active_tag = self._get_next_tag(latest_tag)
+            self.asset_counts[self.active_tag] = 0
+
+    def _get_next_tag(self, current_tag: str) -> str:
+        parts = current_tag.split("-")
+        try:
+            num = int(parts[-1]) + 1
+        except ValueError:
+            num = len(self.asset_counts) + 1
+        return f"document-archive-{num}"
+
+    def get_tag_for_upload(self) -> str:
+        count = self.asset_counts.get(self.active_tag, 0)
+        if count >= self.max_assets:
+            self.active_tag = self._get_next_tag(self.active_tag)
+            self.asset_counts[self.active_tag] = 0
+            sys.stderr.write(f"Rolled over to new release: {self.active_tag} (reached {self.max_assets} assets)\n")
+        return self.active_tag
+
+    def record_upload(self, tag: str):
+        self.asset_counts[tag] = self.asset_counts.get(tag, 0) + 1
 
 def ensure_release_exists(tag: str, repo_slug: Optional[str] = None):
     check_cmd = ["gh", "release", "view", tag]
@@ -147,6 +172,8 @@ def sync_release_archive(manifest_path: str = "data/manifest.json",
 
     download_count = 0
 
+    rel_manager = ReleaseManager(repo_slug=repo_slug) if (not dry_run and os.environ.get("GITHUB_ACTIONS") == "true") else None
+
     with tempfile.TemporaryDirectory() as tmpdir:
         for file_id, doc in documents.items():
             if download_count >= max_downloads:
@@ -159,6 +186,7 @@ def sync_release_archive(manifest_path: str = "data/manifest.json",
             existing_archive = doc.get("archive", {})
             existing_hash = existing_archive.get("sha256")
             current_version = existing_archive.get("version", 1)
+            previous_versions = existing_archive.get("previous_versions", [])
 
             if not download_url:
                 continue
@@ -197,16 +225,18 @@ def sync_release_archive(manifest_path: str = "data/manifest.json",
                 asset_name = f"{file_id}_v{version}{ext}"
                 event_type = "UPDATED"
 
-            # Determine active release tag (handles splitting across releases when >= 900 assets)
-            active_tag = "document-archive"
-            if not dry_run and os.environ.get("GITHUB_ACTIONS") == "true":
-                active_tag = get_active_release_tag(repo_slug)
+            # Determine active release tag via ReleaseManager (handles 900+ asset rollover)
+            active_tag = "document-archive-1"
+            if rel_manager:
+                active_tag = rel_manager.get_tag_for_upload()
 
             release_asset_url = f"https://github.com/{repo_slug}/releases/download/{active_tag}/{asset_name}"
 
             upload_success = True
             if not dry_run:
                 upload_success = upload_release_asset(active_tag, tmp_file_path, asset_name, repo_slug=repo_slug)
+                if upload_success and rel_manager:
+                    rel_manager.record_upload(active_tag)
 
             try:
                 os.remove(tmp_file_path)
@@ -214,13 +244,26 @@ def sync_release_archive(manifest_path: str = "data/manifest.json",
                 pass
 
             if upload_success:
+                new_previous_versions = list(previous_versions)
+                if event_type == "UPDATED" and existing_hash:
+                    # Archive previous version snapshot
+                    new_previous_versions.append({
+                        "version": current_version,
+                        "sha256": existing_hash,
+                        "release_tag": existing_archive.get("release_tag", active_tag),
+                        "asset_name": existing_archive.get("asset_name", f"{file_id}{ext}"),
+                        "release_url": existing_archive.get("release_url", ""),
+                        "archived_at": existing_archive.get("archived_at", current_time_iso)
+                    })
+
                 doc["archive"] = {
                     "sha256": new_hash,
                     "release_tag": active_tag,
                     "asset_name": asset_name,
                     "release_url": release_asset_url,
                     "archived_at": current_time_iso,
-                    "version": version
+                    "version": version,
+                    "previous_versions": new_previous_versions
                 }
 
                 if event_type == "ADDED":

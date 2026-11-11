@@ -43,6 +43,7 @@ class CommitteeScraper:
         self.max_runtime_seconds = max_runtime_minutes * 60
         self.start_time = time.time()
         self.manifest = self._load_manifest()
+        self.seen_file_ids = set()
 
     def _load_manifest(self) -> Dict[str, Any]:
         if os.path.exists(self.manifest_path):
@@ -148,6 +149,8 @@ class CommitteeScraper:
             existing = self.manifest["documents"].get(file_id, {})
             last_modified = existing.get("last_modified")
 
+            self.seen_file_ids.add(file_id)
+
             # Always fetch fresh DownloadLink so SAS tokens are updated on every run
             meta = self.get_file_metadata(file_id)
             download_url = meta.get("DownloadLink") or existing.get("download_url") or ""
@@ -169,8 +172,13 @@ class CommitteeScraper:
                 "last_modified": last_modified or "",
                 "download_url": download_url,
                 "direct_api_url": f"{API_BASE}/CommitteeFileDownloadLink?committeeId={self.committee_id}&fileId={file_id}",
-                "committee_url": COMMITTEE_PAGE_URL
+                "committee_url": COMMITTEE_PAGE_URL,
+                "status": "active"
             }
+
+            # Preserve existing archive metadata and version history if present
+            if "archive" in existing:
+                record["archive"] = existing["archive"]
 
             self.manifest["documents"][file_id] = record
             node["files"].append(record)
@@ -187,6 +195,21 @@ class CommitteeScraper:
             node["folders"].append(child_node)
 
         return node
+
+    def check_removed_documents(self):
+        """Detect documents that were in manifest but not seen in full crawl."""
+        now_iso = datetime.now(timezone.utc).isoformat()
+        removed_count = 0
+        for doc_id, doc in self.manifest.get("documents", {}).items():
+            if doc_id not in self.seen_file_ids:
+                if doc.get("status") != "removed":
+                    doc["status"] = "removed"
+                    doc["removed_at"] = doc.get("removed_at") or now_iso
+                    removed_count += 1
+            else:
+                doc["status"] = "active"
+        if removed_count > 0:
+            sys.stderr.write(f"Detected {removed_count} document(s) removed from parliamentary portal. Marked as removed.\n")
 
     def build_outputs(self, tree: Dict[str, Any], catalog_json_path: str, catalog_md_path: str):
         all_docs = list(self.manifest["documents"].values())
@@ -259,6 +282,8 @@ def main():
     sys.stderr.write(f"Starting crawl for committee {args.committee_id} (limit: {args.limit or 'All'})...\n")
     
     tree = scraper.crawl_folder(max_files=max_files)
+    if args.limit <= 0:
+        scraper.check_removed_documents()
     scraper.save_manifest()
     scraper.build_outputs(
         tree=tree,

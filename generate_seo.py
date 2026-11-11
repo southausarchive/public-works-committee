@@ -201,6 +201,62 @@ DOCUMENT_TEMPLATE = """<!DOCTYPE html>
     }}
     .btn-portal:hover {{ background: #30363d; color: var(--heading); }}
     
+    .status-banner {{
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      margin-bottom: 1.25rem;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }}
+    .status-banner.removed {{
+      background: rgba(248, 81, 73, 0.15);
+      border: 1px solid rgba(248, 81, 73, 0.4);
+      color: #f85149;
+    }}
+    .version-badge {{
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.15rem 0.5rem;
+      border-radius: 10px;
+      background: rgba(56, 139, 253, 0.15);
+      color: var(--primary);
+      border: 1px solid rgba(56, 139, 253, 0.4);
+      vertical-align: middle;
+      margin-left: 0.5rem;
+    }}
+    .history-section {{
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+    }}
+    .history-title {{
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--heading);
+      margin-bottom: 0.75rem;
+    }}
+    .history-table {{
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }}
+    .history-table th, .history-table td {{
+      padding: 0.6rem 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }}
+    .history-table th {{
+      color: var(--text-muted);
+      font-weight: 500;
+      background: rgba(0,0,0,0.2);
+    }}
+    .history-table td {{
+      color: var(--text-main);
+    }}
+
     footer {{
       margin-top: 3rem;
       text-align: center;
@@ -219,7 +275,8 @@ DOCUMENT_TEMPLATE = """<!DOCTYPE html>
     </div>
 
     <div class="card">
-      <h1>{escaped_title}</h1>
+      {status_banner_html}
+      <h1>{escaped_title}{version_badge_html}</h1>
       <p style="color:var(--text-muted);">Parliament of South Australia &bull; Public Works Committee (56th Parliament)</p>
 
       <div class="meta-grid">
@@ -247,14 +304,14 @@ DOCUMENT_TEMPLATE = """<!DOCTYPE html>
       </div>
 
       <div class="download-action">
-        <a class="btn-download-live" href="{live_resolver_url}" target="_blank" rel="noopener noreferrer">
-          ⚡ Download Live Version
-        </a>
+        {live_download_button_html}
         {archive_button_html}
         <a href="{committee_portal}" target="_blank" rel="noopener" class="btn-portal">
           🏛️ View on Committee Portal ↗
         </a>
       </div>
+
+      {history_section_html}
     </div>
 
     <footer>
@@ -459,12 +516,73 @@ def generate_seo_assets(manifest_path: str = "data/manifest.json",
             }
         }
 
+        # Status banner for removed documents
+        status = doc.get("status", "active")
+        removed_at = (doc.get("removed_at") or "")[:10]
+        if status == "removed":
+            status_banner_html = f'''<div class="status-banner removed">
+        <span>⚠️ Notice: This document was removed from the official parliamentary portal{f" on {removed_at}" if removed_at else ""}. The historical copy is preserved below.</span>
+      </div>'''
+            live_download_button_html = f'<span style="color:var(--text-muted);font-size:0.85rem;align-self:center;">(Live link unavailable - removed from portal)</span>'
+        else:
+            status_banner_html = ''
+            live_download_button_html = f'''<a class="btn-download-live" href="{live_resolver_url}" target="_blank" rel="noopener noreferrer">
+          ⚡ Download Live Version
+        </a>'''
+
+        # Version badge
+        version = archive_meta.get("version", 1)
+        if version > 1:
+            version_badge_html = f'<span class="version-badge">Updated (v{version})</span>'
+        else:
+            version_badge_html = ''
+
+        # Previous versions section
+        prev_versions = archive_meta.get("previous_versions", [])
+        if prev_versions:
+            prev_rows = []
+            for pv in reversed(prev_versions):
+                pv_num = pv.get("version", 1)
+                pv_date = (pv.get("archived_at") or "")[:10] or "Unknown"
+                pv_sha = (pv.get("sha256") or "")[:16] + "..." if pv.get("sha256") else "-"
+                pv_url = pv.get("release_url", "")
+                link_html = f'<a href="{pv_url}" target="_blank" rel="noopener">⬇ Download v{pv_num} (PDF)</a>' if pv_url else '-'
+                prev_rows.append(f'''<tr>
+              <td><strong>Version {pv_num}</strong></td>
+              <td>{pv_date}</td>
+              <td><code style="font-family:monospace;font-size:0.8rem;">{pv_sha}</code></td>
+              <td>{link_html}</td>
+            </tr>''')
+
+            history_section_html = f'''<div class="history-section">
+        <div class="history-title">📜 Previous Archived Versions</div>
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Version</th>
+              <th>Archived Date</th>
+              <th>SHA-256</th>
+              <th>Archived Copy</th>
+            </tr>
+          </thead>
+          <tbody>
+            {"".join(prev_rows)}
+          </tbody>
+        </table>
+      </div>'''
+        else:
+            history_section_html = ''
+
         # 1. Generate Static Landing Page
         html_content = DOCUMENT_TEMPLATE.format(
             page_title=html.escape(page_title),
             meta_description=html.escape(meta_desc),
             canonical_url=canonical_url,
             escaped_title=html.escape(file_name),
+            status_banner_html=status_banner_html,
+            version_badge_html=version_badge_html,
+            live_download_button_html=live_download_button_html,
+            history_section_html=history_section_html,
             schema_json=json.dumps(schema, indent=2),
             base_url=BASE_URL,
             breadcrumb_folder=html.escape(folder),
@@ -498,13 +616,16 @@ def generate_seo_assets(manifest_path: str = "data/manifest.json",
 
         # 3. Add row for Archive Directory
         perm_archive_link = f'<a href="{release_url}">Download PDF</a>' if release_url else '-'
+        status_tag = " <span style='color:#f85149;font-size:0.75rem;'>[Removed]</span>" if status == "removed" else ""
+        ver_tag = f" <span style='color:#58a6ff;font-size:0.75rem;'>[v{version}]</span>" if version > 1 else ""
+        live_link = f"<a href='download/{file_id}.html'>Live Resolver</a>" if status != "removed" else "<span style='color:#8b949e;'>Removed</span>"
         archive_rows.append(
             f"<tr>"
             f"<td><code>{html.escape(folder)}</code></td>"
-            f"<td><a href='documents/{file_id}.html'><strong>{html.escape(file_name)}</strong></a></td>"
+            f"<td><a href='documents/{file_id}.html'><strong>{html.escape(file_name)}</strong></a>{status_tag}{ver_tag}</td>"
             f"<td><span class='badge'>{html.escape(ext)}</span></td>"
             f"<td>{html.escape(size_str)}</td>"
-            f"<td><a href='download/{file_id}.html'>Live Resolver</a></td>"
+            f"<td>{live_link}</td>"
             f"<td>{perm_archive_link}</td>"
             f"</tr>"
         )

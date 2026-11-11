@@ -70,6 +70,13 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
+      - name: Save Manifest Cache
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: data/manifest.json
+          key: manifest-${{ github.run_id }}
+
       - name: Report Success Summary
         if: success()
         run: |
@@ -111,3 +118,60 @@ jobs:
                 labels: ['workflow-alert', 'bug']
               });
             }
+
+  archive-to-releases:
+    name: Archive Documents to GitHub Releases
+    needs: scrape-and-deploy
+    runs-on: ubuntu-latest
+    if: success()
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Restore Manifest Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/manifest.json
+          key: manifest-${{ github.run_id }}
+          restore-keys: |
+            manifest-
+
+      - name: Run GitHub Release Archive Engine
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LIMIT_ARG="${{ github.event.inputs.limit || '0' }}"
+          echo "Running Release Archive Sync Engine (Limit: $LIMIT_ARG)..."
+          python release_archive.py "$LIMIT_ARG"
+
+      - name: Re-generate SEO & Archive Index with Updated Release Links
+        run: |
+          python generate_seo.py
+
+      - name: Update Manifest Cache
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: data/manifest.json
+          key: manifest-${{ github.run_id }}-archived
+
+      - name: Report Archive Summary
+        if: success()
+        run: |
+          echo "### 📦 Document Archiving Complete" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow:** ${{ github.workflow }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Run ID:** ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp:** $(date -u)" >> $GITHUB_STEP_SUMMARY
+          if [ -f CHANGELOG.md ]; then
+            echo "#### Recent Archive Log:" >> $GITHUB_STEP_SUMMARY
+            head -n 25 CHANGELOG.md >> $GITHUB_STEP_SUMMARY
+          fi
