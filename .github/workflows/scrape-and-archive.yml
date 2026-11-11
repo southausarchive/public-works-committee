@@ -10,6 +10,16 @@ on:
         description: 'Limit files to scrape (0 for unlimited)'
         required: false
         default: '0'
+      force_full_recapture:
+        description: 'Force full re-download & re-upload of all archive documents (bypasses hash match)'
+        type: boolean
+        required: false
+        default: false
+      clear_cache:
+        description: 'Start fresh without restoring previous manifest cache'
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: write
@@ -35,6 +45,7 @@ jobs:
           python-version: '3.11'
 
       - name: Restore Manifest Cache
+        if: ${{ !(github.event.inputs.clear_cache == 'true' || github.event.inputs.clear_cache == true) }}
         uses: actions/cache@v4
         with:
           path: data/manifest.json
@@ -162,8 +173,13 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           LIMIT_ARG="${{ github.event.inputs.limit || '0' }}"
-          echo "Running Release Archive Sync Engine (Limit: $LIMIT_ARG)..."
-          python release_archive.py "$LIMIT_ARG"
+          FORCE_ARG=""
+          if [ "${{ github.event.inputs.force_full_recapture }}" = "true" ]; then
+            FORCE_ARG="--force"
+            echo "⚠️ Force full re-capture requested: bypassing SHA-256 skip check"
+          fi
+          echo "Running Release Archive Sync Engine (Limit: $LIMIT_ARG, Force: $FORCE_ARG)..."
+          python release_archive.py "$LIMIT_ARG" $FORCE_ARG
 
       - name: Re-generate SEO & Archive Index with Updated Release Links
         run: |

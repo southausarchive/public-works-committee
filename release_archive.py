@@ -154,7 +154,8 @@ def upload_release_asset(tag: str, filepath: str, asset_name: str, repo_slug: Op
 def sync_release_archive(manifest_path: str = "data/manifest.json",
                          repo_slug: Optional[str] = None,
                          dry_run: bool = False,
-                         max_downloads: int = sys.maxsize) -> Dict[str, Any]:
+                         max_downloads: int = sys.maxsize,
+                         force: bool = False) -> Dict[str, Any]:
     if not os.path.exists(manifest_path):
         sys.stderr.write(f"Manifest {manifest_path} not found. Skipping archive sync.\n")
         return {"processed": 0, "added": 0, "updated": 0, "unchanged": 0}
@@ -206,7 +207,7 @@ def sync_release_archive(manifest_path: str = "data/manifest.json",
 
             new_hash = calculate_sha256(tmp_file_path)
 
-            if existing_hash and existing_hash == new_hash:
+            if not force and existing_hash and existing_hash == new_hash:
                 # Content identical: Single-copy guarantee, skip re-upload
                 stats["unchanged"] += 1
                 try:
@@ -215,11 +216,11 @@ def sync_release_archive(manifest_path: str = "data/manifest.json",
                     pass
                 continue
 
-            # File is either new or content hash changed
-            if not existing_hash:
-                version = 1
+            # File is either new or content hash changed (or forced re-capture)
+            if not existing_hash or force:
+                version = 1 if not existing_hash else current_version
                 asset_name = f"{file_id}{ext}"
-                event_type = "ADDED"
+                event_type = "ADDED" if not existing_hash else "RECAPTURED"
             else:
                 version = current_version + 1
                 asset_name = f"{file_id}_v{version}{ext}"
@@ -266,7 +267,7 @@ def sync_release_archive(manifest_path: str = "data/manifest.json",
                     "previous_versions": new_previous_versions
                 }
 
-                if event_type == "ADDED":
+                if event_type == "ADDED" or event_type == "RECAPTURED":
                     stats["added"] += 1
                 else:
                     stats["updated"] += 1
@@ -291,7 +292,7 @@ def sync_release_archive(manifest_path: str = "data/manifest.json",
     if stats["events"]:
         write_changelog(stats["events"], current_date_str)
 
-    sys.stderr.write(f"Archive sync finished: {stats['added']} added, {stats['updated']} updated, {stats['unchanged']} unchanged.\n")
+    sys.stderr.write(f"Archive sync finished: {stats['added']} added/recaptured, {stats['updated']} updated, {stats['unchanged']} unchanged.\n")
     return stats
 
 def write_changelog(events: List[Dict[str, Any]], date_str: str):
@@ -334,8 +335,12 @@ def write_changelog(events: List[Dict[str, Any]], date_str: str):
         f.write(md_header + "\n".join(new_md_lines) + "\n" + existing_md)
 
 if __name__ == "__main__":
-    limit = 0
-    if len(sys.argv) > 1 and sys.argv[1].isdigit():
-        limit = int(sys.argv[1])
-    max_dls = sys.maxsize if limit <= 0 else limit
-    sync_release_archive(max_downloads=max_dls)
+    import argparse
+    parser = argparse.ArgumentParser(description="Sync permanent document archive to GitHub Releases")
+    parser.add_argument("limit", nargs="?", type=int, default=0, help="Limit number of documents to process (0 for unlimited)")
+    parser.add_argument("--force", action="store_true", help="Force re-download and re-upload of all documents regardless of existing hash")
+    parser.add_argument("--manifest", type=str, default="data/manifest.json", help="Path to manifest JSON")
+    args = parser.parse_args()
+
+    max_dls = sys.maxsize if args.limit <= 0 else args.limit
+    sync_release_archive(manifest_path=args.manifest, max_downloads=max_dls, force=args.force)
