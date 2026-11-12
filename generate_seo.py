@@ -14,6 +14,7 @@ import sys
 import json
 import re
 import html
+import urllib.parse
 from datetime import datetime, timezone
 from typing import Dict, Any, List
 
@@ -271,7 +272,7 @@ DOCUMENT_TEMPLATE = """<!DOCTYPE html>
 <body>
   <div class="container">
     <div class="breadcrumb">
-      <a href="{base_url}/">Home</a> &rsaquo; <span>{breadcrumb_folder}</span> &rsaquo; <span>Document</span>
+      {breadcrumb_html}
     </div>
 
     <div class="card">
@@ -573,6 +574,19 @@ def generate_seo_assets(manifest_path: str = "data/manifest.json",
         else:
             history_section_html = ''
 
+        # Build hierarchical breadcrumb links back to the Index page
+        breadcrumb_parts = [f'<a href="{BASE_URL}/">Home</a>']
+        if folder and folder != "Root":
+            segments = [s for s in folder.split("/") if s]
+            cumulative = []
+            for seg in segments:
+                cumulative.append(seg)
+                cum_path = "/".join(cumulative)
+                encoded_path = urllib.parse.quote(cum_path, safe="")
+                breadcrumb_parts.append(f'<a href="{BASE_URL}/?folder={encoded_path}">{html.escape(seg)}</a>')
+        breadcrumb_parts.append('<span>Document</span>')
+        breadcrumb_html = " &rsaquo; ".join(breadcrumb_parts)
+
         # 1. Generate Static Landing Page
         html_content = DOCUMENT_TEMPLATE.format(
             page_title=html.escape(page_title),
@@ -585,7 +599,7 @@ def generate_seo_assets(manifest_path: str = "data/manifest.json",
             history_section_html=history_section_html,
             schema_json=json.dumps(schema, indent=2),
             base_url=BASE_URL,
-            breadcrumb_folder=html.escape(folder),
+            breadcrumb_html=breadcrumb_html,
             folder_display=html.escape(folder),
             ext_display=html.escape(ext.upper().lstrip('.')),
             size_display=html.escape(size_str),

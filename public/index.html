@@ -1199,6 +1199,15 @@
         }
         
         populateAdvancedFilterOptions();
+
+        // Apply URL ?folder=... parameter if present (e.g., from Document Info breadcrumbs)
+        const urlParams = new URLSearchParams(window.location.search);
+        const folderParam = urlParams.get('folder');
+        if (folderParam) {
+          advFilters.folder = folderParam;
+          syncAdvInputs();
+        }
+
         renderTableHeaders();
         renderTable();
         renderTree();
@@ -1354,8 +1363,11 @@
         }
 
         // Advanced filter: Folder
-        if (advFilters.folder && doc.folder_path !== advFilters.folder) {
-          return false;
+        if (advFilters.folder) {
+          const fp = doc.folder_path || '';
+          if (fp !== advFilters.folder && !fp.startsWith(advFilters.folder + '/')) {
+            return false;
+          }
         }
 
         // Advanced filter: Extension
