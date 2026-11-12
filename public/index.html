@@ -956,7 +956,7 @@
     <!-- Main Controls Panel -->
     <div class="controls-panel">
       <div class="search-box">
-        <input type="text" id="searchInput" class="search-input" placeholder="Quick search documents or categories (e.g., 'Darlington', 'Witness', 'Report')...">
+        <input type="text" id="searchInput" class="search-input" placeholder="Quick search documents, categories, or ID (e.g., 'Darlington', 'Witness', '5ec3f762-...')...">
         <button id="searchClearBtn" class="search-clear-btn" title="Clear search">✕</button>
       </div>
       
@@ -1146,7 +1146,7 @@
 
         // Build high-speed pre-indexed search key for each document
         (catalog.documents || []).forEach(d => {
-          d._searchKey = `${d.name || ''} ${d.folder_path || ''} ${d.extension || ''}`.toLowerCase();
+          d._searchKey = `${d.name || ''} ${d.folder_path || ''} ${d.extension || ''} ${d.id || ''}`.toLowerCase();
           d._nameLower = (d.name || '').toLowerCase();
         });
         
@@ -1305,7 +1305,7 @@
       let list = (catalog.documents || []).filter(doc => {
         // High-speed search using pre-indexed _searchKey
         if (q) {
-          const key = doc._searchKey || `${doc.name || ''} ${doc.folder_path || ''} ${doc.extension || ''}`.toLowerCase();
+          const key = doc._searchKey || `${doc.name || ''} ${doc.folder_path || ''} ${doc.extension || ''} ${doc.id || ''}`.toLowerCase();
           if (!key.includes(q)) return false;
         }
 
